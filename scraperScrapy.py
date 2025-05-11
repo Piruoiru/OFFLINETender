@@ -1,0 +1,78 @@
+import scrapy
+from scrapy.crawler import CrawlerProcess
+import json
+import PyPDF2
+from io import BytesIO
+
+class PDFScraper(scrapy.Spider):
+    name = "pdf_scraper"
+    start_urls = [
+        "https://noi.bz.it/it/chi-siamo/societa-trasparente/bandi-di-gara-e-contratti/avvisi-e-indagini-di-mercato"
+    ]
+
+    # Variabile globale per raccogliere i dati estratti
+    extracted_data = []
+
+    def process_pdf(self, response):
+        """Legge il contenuto di un PDF direttamente dalla risposta."""
+        try:
+            pdf_file = BytesIO(response.body)  # Usa BytesIO per gestire il file in memoria
+            reader = PyPDF2.PdfReader(pdf_file)
+            content = ""
+            for page in reader.pages:
+                content += page.extract_text()
+            return content
+        except Exception as e:
+            return f"Errore durante l'accesso al PDF: {e}"
+
+    def parse(self, response):
+        data_section = response.css('div.content')
+        if data_section:
+            links = data_section.css('a')
+
+            for link in links:
+                title = link.css('::text').get().strip()
+                url = link.css('::attr(href)').get()
+
+                if url:
+                    # Risolvi URL relativi
+                    full_url = response.urljoin(url)
+
+                    # Scarica tutti i file indipendentemente dal tipo
+                    yield scrapy.Request(
+                        url=full_url,
+                        callback=self.handle_file,
+                        meta={'title': title}
+                    )
+        else:
+            self.log("Sezione dati non trovata.")
+
+    def handle_file(self, response):
+        """Gestisce i file scaricati in memoria."""
+        title = response.meta['title']
+        content_type = response.headers.get('Content-Type', b'').decode('utf-8')
+
+        if "application/pdf" in content_type:
+            # Processa il contenuto del PDF
+            content = self.process_pdf(response)
+        else:
+            # Per altri tipi di file, salva solo un messaggio generico
+            content = f"File di tipo {content_type} scaricato."
+
+        # Aggiungi i dati estratti alla lista
+        self.extracted_data.append({
+            'Titolo': title,
+            'URL': response.url,
+            'Contenuto': content
+        })
+
+    def closed(self, reason):
+        """Salva i dati estratti quando il crawler termina."""
+        with open('dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
+            json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
+        self.log("Dati salvati in 'dataScrapy.json'.")
+
+# Esegui il crawler
+process = CrawlerProcess()
+process.crawl(PDFScraper)
+process.start()
