@@ -1,8 +1,10 @@
+	
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import json
 import PyPDF2
 from io import BytesIO
+import re
 
 class PDFScraper(scrapy.Spider):
     name = "pdf_scraper"
@@ -10,13 +12,36 @@ class PDFScraper(scrapy.Spider):
         "https://noi.bz.it/it/chi-siamo/societa-trasparente/bandi-di-gara-e-contratti/avvisi-e-indagini-di-mercato"
     ]
 
-    # Variabile globale per raccogliere i dati estratti
     extracted_data = []
+
+    def extract_provider(self, text):
+        """Estrae il provider dal testo utilizzando pattern predefiniti e fallback."""
+        # Pattern specifici per individuare il provider
+        patterns = [
+            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.|Società|Associazione|Ente))\s+intende individuare',
+            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.))\s+(?:indice|pubblica)',
+            r'La\s+([A-Z][A-Za-z\s\.&-]+)\s+(?:intende|ricerca|lancia)',
+            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.))', 
+        ]
+
+        # Cerco i provider nei pattern definiti sopra
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group(1).strip()
+
+        # Cerco attraverso parole chiave che fornisco io e vanno nel fallback
+        keywords = ["S.p.A.", "Associazione", "Società", "S.r.l.", "Ente"]
+        for keyword in keywords:
+            if keyword in text:
+                return keyword
+
+        return "Provider non trovato"
 
     def process_pdf(self, response):
         """Legge il contenuto di un PDF direttamente dalla risposta."""
         try:
-            pdf_file = BytesIO(response.body)  # Usa BytesIO per gestire il file in memoria
+            pdf_file = BytesIO(response.body) 
             reader = PyPDF2.PdfReader(pdf_file)
             content = ""
             for page in reader.pages:
@@ -31,11 +56,12 @@ class PDFScraper(scrapy.Spider):
             links = data_section.css('a')
 
             for link in links:
-                title = link.css('::text').get().strip()
+                # Estraggo tutto il testo compreso quello nidificato
+                title = ''.join(link.css('*::text').getall()).strip()
                 url = link.css('::attr(href)').get()
 
                 if url:
-                    # Risolvi URL relativi
+                    # Controlla se ci sono altri URL all'interno di altri URL
                     full_url = response.urljoin(url)
 
                     # Scarica tutti i file indipendentemente dal tipo
@@ -56,14 +82,18 @@ class PDFScraper(scrapy.Spider):
             # Processa il contenuto del PDF
             content = self.process_pdf(response)
         else:
-            # Per altri tipi di file, salva solo un messaggio generico
+            # Per altri tipi di file salva solo un messaggio generico
             content = f"File di tipo {content_type} scaricato."
+
+        # Estrai il provider dal contenuto o dal titolo
+        provider = self.extract_provider(content if content else title)
 
         # Aggiungi i dati estratti alla lista
         self.extracted_data.append({
             'Titolo': title,
             'URL': response.url,
-            'Contenuto': content
+            'Contenuto': content,
+            'Provider': provider
         })
 
     def closed(self, reason):
