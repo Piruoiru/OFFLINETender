@@ -10,7 +10,7 @@ from groq import Groq
 #     raise ValueError("La chiave API di Groq non è stata trovata. Assicurati che il file .env contenga GROQ_API_KEY.")
 
 # Inizializza il client Groq
-client = Groq(api_key="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")
+client = Groq(api_key="")
 
 def analyze_with_llama(content):
     """
