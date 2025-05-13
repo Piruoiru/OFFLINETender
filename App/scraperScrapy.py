@@ -1,10 +1,12 @@
-	
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import json
 import PyPDF2
 from io import BytesIO
 import re
+from embedderLocal import get_embedding  # Importa la funzione per ottenere gli embedding
+from llamaAnalyzer import analyze_with_llama
+
 
 class PDFScraper(scrapy.Spider):
     name = "pdf_scraper"
@@ -17,7 +19,7 @@ class PDFScraper(scrapy.Spider):
     def process_pdf(self, response):
         """Legge il contenuto di un PDF direttamente dalla risposta."""
         try:
-            pdf_file = BytesIO(response.body) 
+            pdf_file = BytesIO(response.body)
             reader = PyPDF2.PdfReader(pdf_file)
             content = ""
             for page in reader.pages:
@@ -61,15 +63,11 @@ class PDFScraper(scrapy.Spider):
             # Per altri tipi di file salva solo un messaggio generico
             content = f"File di tipo {content_type} scaricato."
 
-        # Estrai il provider dal contenuto o dal titolo
-        provider = self.extract_provider(content if content else title)
-
         # Aggiungi i dati estratti alla lista
         self.extracted_data.append({
             'Titolo': title,
             'URL': response.url,
-            'Contenuto': content,
-            'Provider': provider
+            'Contenuto': content
         })
 
     def closed(self, reason):
@@ -77,6 +75,7 @@ class PDFScraper(scrapy.Spider):
         with open('dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
             json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
         self.log("Dati salvati in 'dataScrapy.json'.")
+
 
 # Esegui il crawler
 process = CrawlerProcess()

@@ -1,0 +1,28 @@
+services: 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+      - "11434:11434"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./App:/App  
+      - ./OllamaModels:/root/.ollama/models
+      - ./Start.sh:/Start.sh
+      - ./App/requirements.txt:/App/requirements.txt
+      - data_volume:/App/Data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+
+volumes:
+  data_volume:
+
+networks:
+  app_network:
+    driver: bridge
