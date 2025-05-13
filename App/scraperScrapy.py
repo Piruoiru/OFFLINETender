@@ -14,30 +14,6 @@ class PDFScraper(scrapy.Spider):
 
     extracted_data = []
 
-    def extract_provider(self, text):
-        """Estrae il provider dal testo utilizzando pattern predefiniti e fallback."""
-        # Pattern specifici per individuare il provider
-        patterns = [
-            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.|Società|Associazione|Ente))\s+intende individuare',
-            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.))\s+(?:indice|pubblica)',
-            r'La\s+([A-Z][A-Za-z\s\.&-]+)\s+(?:intende|ricerca|lancia)',
-            r'([A-Z][A-Za-z\s\.&-]+(?:S\.p\.A\.|S\.r\.l\.))', 
-        ]
-
-        # Cerco i provider nei pattern definiti sopra
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                return match.group(1).strip()
-
-        # Cerco attraverso parole chiave che fornisco io e vanno nel fallback
-        keywords = ["S.p.A.", "Associazione", "Società", "S.r.l.", "Ente"]
-        for keyword in keywords:
-            if keyword in text:
-                return keyword
-
-        return "Provider non trovato"
-
     def process_pdf(self, response):
         """Legge il contenuto di un PDF direttamente dalla risposta."""
         try:
@@ -51,7 +27,7 @@ class PDFScraper(scrapy.Spider):
             return f"Errore durante l'accesso al PDF: {e}"
 
     def parse(self, response):
-        data_section = response.css('div.content')
+        data_section = response.css('div.page-content')
         if data_section:
             links = data_section.css('a')
 

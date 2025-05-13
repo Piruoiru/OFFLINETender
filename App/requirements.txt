@@ -1,0 +1,7 @@
+PyPDF2
+scrapy
+gunicorn
+beautifulsoup4
+requests
+pandas
+ollama
