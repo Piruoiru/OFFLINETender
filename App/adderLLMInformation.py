@@ -22,12 +22,12 @@ def add_information_to_json(input_file, output_file):
             content = entry.get('Contenuto', None)
 
             # Ottieni l'embedding del contenuto
-            embedding = None
-            if content:
-                try:
-                    embedding = get_embedding(content)
-                except Exception as e:
-                    print(f"Errore durante la generazione dell'embedding: {e}")
+            # embedding = None
+            # if content:
+            #     try:
+            #         embedding = get_embedding(content)
+            #     except Exception as e:
+            #         print(f"Errore durante la generazione dell'embedding: {e}")
 
             # Esegui l'analisi con Llama
             llama_analysis = {}
@@ -42,7 +42,7 @@ def add_information_to_json(input_file, output_file):
                 "Titolo": entry.get("Titolo", ""),
                 "URL": entry.get("URL", ""),
                 "Contenuto": content,
-                "Embedding": embedding,
+                # "Embedding": embedding,
                 **llama_analysis  # Aggiungi i campi estratti da Llama
             }
 

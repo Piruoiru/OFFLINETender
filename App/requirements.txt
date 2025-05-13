@@ -7,3 +7,5 @@ pandas
 ollama
 groq
 python-dotenv
+litellm
+flask

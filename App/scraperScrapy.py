@@ -3,9 +3,6 @@ from scrapy.crawler import CrawlerProcess
 import json
 import PyPDF2
 from io import BytesIO
-import re
-from embedderLocal import get_embedding  # Importa la funzione per ottenere gli embedding
-from llamaAnalyzer import analyze_with_llama
 
 
 class PDFScraper(scrapy.Spider):

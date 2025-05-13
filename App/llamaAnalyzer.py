@@ -1,30 +1,20 @@
-import os
+import requests
 import json
-from dotenv import load_dotenv
-from groq import Groq
-
-# Carica le variabili d'ambiente
-# load_dotenv()
-# groq_api_key = os.getenv("GROQ_API_KEY")
-# if not groq_api_key:
-#     raise ValueError("La chiave API di Groq non è stata trovata. Assicurati che il file .env contenga GROQ_API_KEY.")
-
-# Inizializza il client Groq
-client = Groq(api_key="")
 
 def analyze_with_llama(content):
     """
-    Analizza il contenuto utilizzando il modello Llama tramite l'API di Groq.
-    
+    Analizza il contenuto utilizzando il modello Llama tramite il server Ollama.
+
     Args:
         content (str): Il contenuto del documento da analizzare.
-    
+
     Returns:
         dict: I dati estratti dal modello Llama in formato JSON.
     """
-    try:
-        # Prompt per il modello
-        user_input = (
+    url = "http://localhost:11435/api/completions"  # Endpoint per completamenti di testo
+    payload = {
+        "model": "llama3.1",  # Nome del modello
+        "prompt": (
             f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
             f"- Provider (nome dell'organizzazione o azienda)\n"
             f"- Data di pubblicazione\n"
@@ -47,24 +37,28 @@ def analyze_with_llama(content):
             f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
 
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "user", "content": user_input}
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.7,
-            max_tokens=1000,
-        )
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Solleva un'eccezione per errori HTTP
 
-        # Estrai la risposta dal modello
-        response = chat_completion.choices[0].message.content
+        # Estrai la risposta dal server
+        response_data = response.json()
+        if "completion" in response_data:
+            return process_llm_response(response_data["completion"])
+        else:
+            print("Errore: Nessun campo 'completion' trovato nella risposta.")
+            return {}
 
-        # Elabora la risposta e convertila in JSON
-        return process_llm_response(response)
-
-    except Exception as e:
-        print(f"Errore durante la richiesta al server Groq: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"Errore durante la richiesta al server Ollama: {e}")
+        return {}
+    except ValueError as e:
+        print(f"Errore nella risposta del server Ollama: {e}")
         return {}
 
 def process_llm_response(response):
@@ -83,14 +77,4 @@ def process_llm_response(response):
         return json_response
     except json.JSONDecodeError:
         print("Errore: La risposta del modello non è un JSON valido.")
-        # Tentativo di pulire la risposta
-        try:
-            # Rimuovi caratteri extra come backticks e spazi
-            cleaned_response = response.strip().strip("```").strip()
-            json_response = json.loads(cleaned_response)
-            return json_response
-        except json.JSONDecodeError:
-            print("Errore: Impossibile correggere la risposta del modello.")
-            return {}
-
-
+        return {}
