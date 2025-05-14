@@ -15,7 +15,6 @@ def generate_embeddings_for_all_fields(input_file, output_file):
         with open(input_file, 'r', encoding='utf-8') as infile:
             data = json.load(infile)
 
-        # Itera su ogni elemento del JSON
         for entry in data:
             # Itera su una copia delle chiavi del dizionario
             for key in list(entry.keys()):
@@ -24,7 +23,6 @@ def generate_embeddings_for_all_fields(input_file, output_file):
                 if isinstance(value, str) and value.strip():
                     print(f"Generazione embedding per il campo '{key}'...")
                     try:
-                        # Genera l'embedding utilizzando la funzione get_embedding
                         embedding = get_embedding(value)
                         entry[f"{key}_Embedding"] = embedding  # Salva l'embedding con un nuovo campo
                     except Exception as e:
@@ -47,6 +45,6 @@ def generate_embeddings_for_all_fields(input_file, output_file):
 
 # Esegui la funzione
 if __name__ == "__main__":
-    input_file = "dataAddedInformation.json"  # Percorso del file JSON di input
-    output_file = "dataAddedInformation_with_field_embeddings.json"  # Percorso del file JSON di output
+    input_file = "dataAddedInformation.json" 
+    output_file = "dataAddedInformation_with_field_embeddings.json"  
     generate_embeddings_for_all_fields(input_file, output_file)

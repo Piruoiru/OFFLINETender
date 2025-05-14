@@ -1,9 +1,13 @@
 import requests
 import json
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def get_embedding(text):
     """
-    Genera l'embedding di un testo utilizzando il modello di embedding di Ollama.
+    Genera l'embedding di un testo utilizzando il modello di embedding.
     
     Args:
         text (str): Il testo per cui generare l'embedding.
@@ -11,9 +15,10 @@ def get_embedding(text):
     Returns:
         list: L'embedding generato come lista di numeri.
     """
-    url = "http://app:11434/api/embeddings"  # Endpoint del server Ollama
+    model = os.getenv("MODEL_EMBEDDING")  
+    url = os.getenv("MODEL_EMBEDDING_API") 
     payload = {
-        "model": "mxbai-embed-large",  # Nome del modello di embedding
+        "model": model, 
         "prompt": text
     }
     headers = {
@@ -28,8 +33,8 @@ def get_embedding(text):
             raise ValueError("Embedding non trovato nella risposta.")
         return embedding
     except requests.exceptions.RequestException as e:
-        print(f"Errore durante la richiesta al server Ollama: {e}")
+        print(f"Errore durante la richiesta al server: {e}")
         return None
     except ValueError as e:
-        print(f"Errore nella risposta del server Ollama: {e}")
+        print(f"Errore nella risposta del server: {e}")
         return None

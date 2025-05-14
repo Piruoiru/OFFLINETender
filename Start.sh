@@ -3,7 +3,7 @@
 OLLAMA_HOST=0.0.0.0:11434 ollama serve &
 
 echo "Waiting for Ollama server to be active..."
-while ! curl -s http://localhost:11434/api/tags | grep -q 'models'; do
+while [ "$(ollama list | grep 'NAME')" == "" ]; do
   sleep 1
 done
 

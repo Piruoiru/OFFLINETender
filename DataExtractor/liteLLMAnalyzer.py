@@ -1,20 +1,23 @@
-import requests
+import os
 import json
+from litellm import completion
+from dotenv import load_dotenv
+import os
 
-def analyze_with_llama(content):
+load_dotenv()
+
+def analyze_with_model(content):
     """
-    Analizza il contenuto utilizzando il modello Llama tramite il server Ollama.
-
+    Analizza il contenuto utilizzando il modello.
+    
     Args:
         content (str): Il contenuto del documento da analizzare.
-
+    
     Returns:
-        dict: I dati estratti dal modello Llama in formato JSON.
+        dict: I dati estratti dal modello in formato JSON.
     """
-    url = "http://localhost:11435/api/completions"  # Endpoint per completamenti di testo
-    payload = {
-        "model": "llama3.1",  # Nome del modello
-        "prompt": (
+    try:
+        user_input = (
             f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
             f"- Provider (nome dell'organizzazione o azienda)\n"
             f"- Data di pubblicazione\n"
@@ -37,28 +40,22 @@ def analyze_with_llama(content):
             f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
 
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()  # Solleva un'eccezione per errori HTTP
+        chat_completion = completion(
+            messages=[
+                {"role": "user", "content": user_input}
+            ],
+            model=os.getenv("MODEL_LLM"),
+            api_base=os.getenv("MODEL_LLM_API"),
+            temperature=float(os.getenv("MODEL_TEMPERATURE")),
+            max_tokens=int(os.getenv("MODEL_MAX_TOKENS")),
+        )
 
-        # Estrai la risposta dal server
-        response_data = response.json()
-        if "completion" in response_data:
-            return process_llm_response(response_data["completion"])
-        else:
-            print("Errore: Nessun campo 'completion' trovato nella risposta.")
-            return {}
+        response = chat_completion["choices"][0]["message"]["content"]
+        return process_llm_response(response)
 
-    except requests.exceptions.RequestException as e:
-        print(f"Errore durante la richiesta al server Ollama: {e}")
-        return {}
-    except ValueError as e:
-        print(f"Errore nella risposta del server Ollama: {e}")
+    except Exception as e:
+        print(f"Errore durante la richiesta al server: {e}")
         return {}
 
 def process_llm_response(response):
@@ -72,9 +69,16 @@ def process_llm_response(response):
         dict: Un dizionario Python con i dati estratti, oppure un dizionario vuoto in caso di errore.
     """
     try:
-        # Prova a caricare la risposta come JSON
-        json_response = json.loads(response)
-        return json_response
+        # Rimuovi eventuali delimitatori di codice e spazi bianchi
+        cleaned_response = response.strip().strip("```json").strip("```").strip()
+
+        json_response = json.loads(cleaned_response)
+        return json_response   
     except json.JSONDecodeError:
-        print("Errore: La risposta del modello non è un JSON valido.")
+        print("Errore: la risposta del modello non è un JSON valido.")
+        print(cleaned_response)
+        # print(json_response)
         return {}
+            
+
+

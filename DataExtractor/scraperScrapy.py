@@ -3,13 +3,14 @@ from scrapy.crawler import CrawlerProcess
 import json
 import PyPDF2
 from io import BytesIO
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 class PDFScraper(scrapy.Spider):
     name = "pdf_scraper"
-    start_urls = [
-        "https://noi.bz.it/it/chi-siamo/societa-trasparente/bandi-di-gara-e-contratti/avvisi-e-indagini-di-mercato"
-    ]
+    start_urls =[os.getenv("SITE_TO_SCRAPE")]
 
     extracted_data = []
 
@@ -26,6 +27,7 @@ class PDFScraper(scrapy.Spider):
             return f"Errore durante l'accesso al PDF: {e}"
 
     def parse(self, response):
+        """Analizza la pagina principale e trova i link ai file PDF."""
         data_section = response.css('div.page-content')
         if data_section:
             links = data_section.css('a')
