@@ -1,28 +1,36 @@
-services: 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
-      - "11434:11434"
-    environment:
-      - FLASK_ENV=production
-      - PYTHONUNBUFFERED=1
+services:
+  flask:
+    build: .
+    env_file: .env
+    depends_on:
+      - ollama
     volumes:
-      - ./App:/App  
-      - ./OllamaModels:/root/.ollama/models
-      - ./Start.sh:/Start.sh
-      - ./App/requirements.txt:/App/requirements.txt
-      - data_volume:/App/Data
+      - ./output:/app/output
     networks:
-      - app_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      - backend
 
-volumes:
-  data_volume:
+  ollama:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./litellm_config.yaml:/config.yaml
+    command: ["--config", "/config.yaml"]
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - flask
+    networks:
+      - backend
 
 networks:
-  app_network:
+  backend:
     driver: bridge

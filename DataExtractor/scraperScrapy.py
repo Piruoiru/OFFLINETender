@@ -71,7 +71,7 @@ class PDFScraper(scrapy.Spider):
 
     def closed(self, reason):
         """Salva i dati estratti quando il crawler termina."""
-        with open('dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
+        with open('output/dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
             json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
         self.log("Dati salvati in 'dataScrapy.json'.")
 

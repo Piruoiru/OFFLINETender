@@ -1,5 +1,5 @@
 import json
-from embedderLocal import get_embedding
+from DataExtractor.embedderLocal import get_embedding
 
 def generate_embeddings_for_all_fields(input_file, output_file):
     """

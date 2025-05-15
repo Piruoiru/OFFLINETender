@@ -1,6 +1,5 @@
 import json
-from embedderLocal import get_embedding
-from liteLLMAnalyzer import analyze_with_model
+from DataExtractor.liteLLMAnalyzer import analyze_with_model
 
 def add_information_to_json(input_file, output_file):
     """

@@ -1,21 +1,12 @@
 import os
 import json
+from flask import Flask, request, jsonify
 from litellm import completion
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
 def analyze_with_model(content):
-    """
-    Analizza il contenuto utilizzando il modello.
-    
-    Args:
-        content (str): Il contenuto del documento da analizzare.
-    
-    Returns:
-        dict: I dati estratti dal modello in formato JSON.
-    """
     try:
         user_input = (
             f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
@@ -36,19 +27,18 @@ def analyze_with_model(content):
             f"- Mail a cui mandare la quota\n"
             f"- Nome emittente\n"
             f"- Modalità di pagamento\n\n"
+            f"- Pertinenza con l'azienda: Valuta quanto il contenuto del testo è pertinente con l'attività dell'azienda. L'azienda si occupa di 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. Fornisci una breve spiegazione della pertinenza o indica 'Non pertinente' se non ci sono elementi rilevanti. Assicurati di includere questo campo nella risposta."            
             f"Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
             f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
 
         chat_completion = completion(
-            messages=[
-                {"role": "user", "content": user_input}
-            ],
+            messages=[{"role": "user", "content": user_input}],
             model=os.getenv("MODEL_LLM"),
             api_base=os.getenv("MODEL_LLM_API"),
-            temperature=float(os.getenv("MODEL_TEMPERATURE")),
-            max_tokens=int(os.getenv("MODEL_MAX_TOKENS")),
+            temperature=float(os.getenv("MODEL_TEMPERATURE", 0.7)),
+            max_tokens=int(os.getenv("MODEL_MAX_TOKENS", 2048)),
         )
 
         response = chat_completion["choices"][0]["message"]["content"]
@@ -56,29 +46,13 @@ def analyze_with_model(content):
 
     except Exception as e:
         print(f"Errore durante la richiesta al server: {e}")
-        return {}
+        return {"error": str(e)}
 
 def process_llm_response(response):
-    """
-    Elabora la risposta grezza del modello e la converte in un JSON valido.
-
-    Args:
-        response (str): La risposta grezza del modello.
-
-    Returns:
-        dict: Un dizionario Python con i dati estratti, oppure un dizionario vuoto in caso di errore.
-    """
     try:
-        # Rimuovi eventuali delimitatori di codice e spazi bianchi
         cleaned_response = response.strip().strip("```json").strip("```").strip()
-
         json_response = json.loads(cleaned_response)
-        return json_response   
+        return json_response
     except json.JSONDecodeError:
         print("Errore: la risposta del modello non è un JSON valido.")
-        print(cleaned_response)
-        # print(json_response)
-        return {}
-            
-
-
+        return {"error": "Risposta del modello non valida", "raw": response}

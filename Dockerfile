@@ -1,22 +1,16 @@
 FROM python:3.11-slim
 
-WORKDIR /App
+# Crea directory dell'app
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    curl \
-    postgresql-client \
-    dos2unix \
-    && curl -fsSL https://ollama.com/install.sh | sh \
-    && apt-get clean
+# Copia i file
+COPY . /app
 
-COPY App/ .
-
+# Installa le dipendenze
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PYTHONPATH=/App
-COPY ./Start.sh /Start.sh
-RUN chmod +x /Start.sh && dos2unix /Start.sh
+# Esponi la porta Flask
+EXPOSE 5000
 
-EXPOSE 5001 11434
-
-CMD ["/Start.sh"]
+# Comando per avviare l'app Flask
+CMD ["python", "app.py"]
