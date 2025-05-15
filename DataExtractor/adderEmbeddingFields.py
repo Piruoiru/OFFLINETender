@@ -44,7 +44,7 @@ def generate_embeddings_for_all_fields(input_file, output_file):
 
 
 # Esegui la funzione
-if __name__ == "__main__":
-    input_file = "dataAddedInformation.json" 
-    output_file = "dataAddedInformation_with_field_embeddings.json"  
-    generate_embeddings_for_all_fields(input_file, output_file)
+# if __name__ == "__main__":
+#     input_file = "dataAddedInformation.json" 
+#     output_file = "dataAddedInformation_with_field_embeddings.json"  
+#     generate_embeddings_for_all_fields(input_file, output_file)

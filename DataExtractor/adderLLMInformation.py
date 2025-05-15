@@ -53,7 +53,7 @@ def add_information_to_json(input_file, output_file):
 
 
 # Esegui la funzione
-if __name__ == "__main__":
-    input_file = "dataScrapy.json"
-    output_file = "dataAddedInformation.json"
-    add_information_to_json(input_file, output_file)
+# if __name__ == "__main__":
+#     input_file = "dataScrapy.json"
+#     output_file = "dataAddedInformation.json"
+#     add_information_to_json(input_file, output_file)

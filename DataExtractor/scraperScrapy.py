@@ -77,6 +77,6 @@ class PDFScraper(scrapy.Spider):
 
 
 # Esegui il crawler
-process = CrawlerProcess()
-process.crawl(PDFScraper)
-process.start()
+# process = CrawlerProcess()
+# process.crawl(PDFScraper)
+# process.start()
