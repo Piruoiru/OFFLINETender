@@ -11,6 +11,10 @@ services:
 
   ollama:
     image: ghcr.io/berriai/litellm:main-latest
+    deploy:
+      resources:
+        limits:
+          memory: 4G
     container_name: ollama
     ports:
       - "11434:11434"
