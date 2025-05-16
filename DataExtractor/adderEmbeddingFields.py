@@ -41,10 +41,3 @@ def generate_embeddings_for_all_fields(input_file, output_file):
         print(f"Errore: Il file '{input_file}' non è un JSON valido.")
     except Exception as e:
         print(f"Errore durante l'elaborazione: {e}")
-
-
-# Esegui la funzione
-# if __name__ == "__main__":
-#     input_file = "dataAddedInformation.json" 
-#     output_file = "dataAddedInformation_with_field_embeddings.json"  
-#     generate_embeddings_for_all_fields(input_file, output_file)

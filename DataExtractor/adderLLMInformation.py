@@ -50,10 +50,3 @@ def add_information_to_json(input_file, output_file):
         print(f"Errore: Il file '{input_file}' non è un JSON valido.")
     except Exception as e:
         print(f"Errore durante l'elaborazione: {e}")
-
-
-# Esegui la funzione
-# if __name__ == "__main__":
-#     input_file = "dataScrapy.json"
-#     output_file = "dataAddedInformation.json"
-#     add_information_to_json(input_file, output_file)

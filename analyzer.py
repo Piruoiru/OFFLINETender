@@ -24,8 +24,8 @@ def process_site():
     if not data or "url" not in data:
         return jsonify({"error": "Missing 'url' in request"}), 400
 
-    url_to_scrape = data["url"]
-    os.environ["SITE_TO_SCRAPE"] = url_to_scrape
+    # url_to_scrape = data["url"]
+    # os.environ["SITE_TO_SCRAPE"] = url_to_scrape
 
 
     try:
@@ -33,13 +33,15 @@ def process_site():
         os.makedirs("output", exist_ok=True)
 
         output_file_scrapy = "output/dataScrapy.json"
-        process = CrawlerProcess(get_project_settings())
-        process.crawl(PDFScraper)
-        process.start()
-
-
         if not os.path.exists(output_file_scrapy):
-            return jsonify({"error": "Scraping failed, no data extracted"}), 500
+            return jsonify({"error": "Il file dataScrapy.json non esiste"}), 500
+        # process = CrawlerProcess(get_project_settings())
+        # process.crawl(PDFScraper)
+        # process.start()
+
+
+        # if not os.path.exists(output_file_scrapy):
+        #     return jsonify({"error": "Scraping failed, no data extracted"}), 500
 
         # Step 2: Arricchimento dei dati con LLM
         output_file_llm = "output/dataAddedInformation.json"
