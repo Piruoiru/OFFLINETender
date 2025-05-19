@@ -2,8 +2,12 @@ import requests
 import json
 from dotenv import load_dotenv
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import ollama
 
 load_dotenv()
+
+max_workers = int(os.getenv("MAX_WORKERS_PARALLEL_EMBEDDING"))
 
 def get_embedding(text):
     """
@@ -17,18 +21,17 @@ def get_embedding(text):
     """
     model = os.getenv("MODEL_EMBEDDING")  
     url = os.getenv("MODEL_EMBEDDING_API") 
-    payload = {
-        "model": model, 
-        "prompt": text
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
+    # payload = {
+    #     "model": model, 
+    #     "prompt": text
+    # }
+    # headers = {
+    #     "Content-Type": "application/json"
+    # }
+    response = ollama.embeddings(model=os.getenv("MODEL_EMBEDDING"), prompt=text)
 
     try:
-        response = requests.post(url, data=json.dumps(payload), headers=headers)
-        response.raise_for_status()  # Solleva un'eccezione per errori HTTP
-        embedding = response.json().get("embedding")
+        embedding = response.get("embedding")
         if embedding is None:
             raise ValueError("Embedding non trovato nella risposta.")
         return embedding
@@ -38,3 +41,23 @@ def get_embedding(text):
     except ValueError as e:
         print(f"Errore nella risposta del server: {e}")
         return None
+    
+def get_embeddings_parallel(texts, max_workers=max_workers):
+    """
+    Esegue embedding in parallelo su una lista di testi.
+    """
+    embeddings = [None] * len(texts)
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(get_embedding, text): i for i, text in enumerate(texts)}
+        
+        for future in as_completed(futures):
+            i = futures[future]
+            try:
+                result = future.result()
+                embeddings[i] = result
+            except Exception as e:
+                print(f"[ERRORE] Chunk {i}: {e}")
+                embeddings[i] = None
+
+    return embeddings

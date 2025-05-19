@@ -27,7 +27,9 @@ def analyze_with_model(content):
             f"- Mail a cui mandare la quota\n"
             f"- Nome emittente\n"
             f"- Modalità di pagamento\n\n"
-            f"- Pertinenza con l'azienda: Valuta quanto il contenuto del testo è pertinente con l'attività dell'azienda. L'azienda si occupa di 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. Fornisci una breve spiegazione della pertinenza o indica 'Non pertinente' se non ci sono elementi rilevanti. Assicurati di includere questo campo nella risposta."            
+            f"- Pertinenza con l'azienda\n\n"
+            f"L'azienda si occupa di: 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. "
+            f"Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
             f"Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
             f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
@@ -37,8 +39,8 @@ def analyze_with_model(content):
             messages=[{"role": "user", "content": user_input}],
             model=os.getenv("MODEL_LLM"),
             api_base=os.getenv("MODEL_LLM_API"),
-            temperature=float(os.getenv("MODEL_TEMPERATURE", 0.7)),
-            max_tokens=int(os.getenv("MODEL_MAX_TOKENS", 2048)),
+            temperature=float(os.getenv("MODEL_TEMPERATURE")),
+            max_tokens=int(os.getenv("MODEL_MAX_TOKENS")),
             timeout=1200
         )
 
@@ -57,3 +59,35 @@ def process_llm_response(response):
     except json.JSONDecodeError:
         print("Errore: la risposta del modello non è un JSON valido.")
         return {"error": "Risposta del modello non valida", "raw": response}
+    
+def build_prompt_from_chunks(chunks):
+    """
+    Costruisce il prompt per l'LLM unendo i chunk rilevanti.
+    """
+    base_prompt = (
+        f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
+        f"- Provider (nome dell'organizzazione o azienda)\n"
+        f"- Data di pubblicazione\n"
+        f"- Data di termine di consegna\n"
+        f"- Tipologia di procedura\n"
+        f"- Finalità\n"
+        f"- Riferimento finanziamento\n"
+        f"- CUP\n"
+        f"- Titolo dell'intervento\n"
+        f"- Descrizione\n"
+        f"- Fondo\n"
+        f"- Caratteristiche richieste\n"
+        f"- Tempistiche\n"
+        f"- Budget massimo\n"
+        f"- Deadline\n"
+        f"- Mail a cui mandare la quota\n"
+        f"- Nome emittente\n"
+        f"- Modalità di pagamento\n"
+        f"- Pertinenza con l'azienda\n\n"
+        f"L'azienda si occupa di: 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. "
+        f"Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
+        f"Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
+        f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
+    )
+    joined_chunks = "\n\n".join([doc.page_content for doc in chunks])
+    return base_prompt + "Testo:\n" + joined_chunks

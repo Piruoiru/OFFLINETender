@@ -74,9 +74,3 @@ class PDFScraper(scrapy.Spider):
         with open('output/dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
             json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
         self.log("Dati salvati in 'dataScrapy.json'.")
-
-
-# Esegui il crawler
-# process = CrawlerProcess()
-# process.crawl(PDFScraper)
-# process.start()
