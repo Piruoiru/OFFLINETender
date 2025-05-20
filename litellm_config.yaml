@@ -1,15 +1,11 @@
 model_list:
   - model_name: llama3.1
+    litellm_provider: ollama
     litellm_params:
-      model: ${MODEL_LLM}
-      api_base: ${MODEL_API}
-      api_key: null
-      custom_llm_provider: ollama
+      model: llama3.1
+      api_base: http://host.docker.internal:11434
 
-  - model_name: mxbai-embed-large
-    litellm_params:
-      model: ${MODEL_EMBEDDING}
-      api_base: ${MODEL_EMBEDDING_API}
-      api_key: null
-      custom_llm_provider: ollama
-
+litellm_settings:
+  set_verbose: true
+  drop_params: true
+  test_flag_to_check_logs: true

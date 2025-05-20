@@ -1,81 +1,99 @@
-import json
-from semanticRetrival import analyze_with_retrieval
+# import os
+# import json
+# import queue
+# import threading
+# from scrapy.crawler import CrawlerProcess
+# from scrapy.utils.project import get_project_settings
+# from dotenv import load_dotenv
+# from scraperScrapy import PDFScraper
+# from semanticRetrival import analyze_with_retrieval
 
-INPUT_FILE = "../output/dataScrapy.json"
-OUTPUT_FILE = "../output/dataAnalyzed.json"
+# load_dotenv()
 
-def clean_llm_response(text):
-    """
-    Pulisce una risposta da LLM rimuovendo eventuali backtick e blocchi ```json ... ```
-    """
-    if isinstance(text, dict):
-        return text  # è già un JSON
-    cleaned = text.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
-    return cleaned.strip()
+# result_queue = queue.Queue()
 
-import time
-from semanticRetrival import analyze_with_retrieval
+# class StreamingPDFScraper(PDFScraper):
+#     def handle_file(self, response):
+#         """Processa ogni PDF, analizza e mette in coda il risultato."""
+#         title = response.meta['title']
+#         url = response.url
+#         content_type = response.headers.get('Content-Type', b'').decode('utf-8')
 
-def timed_analysis(text):
-    times = {}
+#         if "application/pdf" in content_type:
+#             content = self.process_pdf(response)
+#         else:
+#             content = f"File di tipo {content_type} scaricato."
 
-    t0 = time.time()
-    risposta = analyze_with_retrieval(text)
-    times["Totale"] = round(time.time() - t0, 2)
+#         try:
+#             if not content.strip():
+#                 raise ValueError("Contenuto PDF vuoto.")
+#             risposta = analyze_with_retrieval(content)
+#             risultato = {
+#                 "Titolo": title,
+#                 "URL": url,
+#                 "Risposta": risposta
+#             }
+#         except Exception as e:
+#             risultato = {
+#                 "Titolo": title,
+#                 "URL": url,
+#                 "Errore": str(e)
+#             }
 
-    for k, v in times.items():
-        print(f"[TEMPO] {k}: {v} sec")
+#         result_queue.put(risultato)
 
-    return risposta
+# def run_crawler():
+#     process = CrawlerProcess(get_project_settings())
+#     process.crawl(StreamingPDFScraper)
+#     process.start()
+#     result_queue.put("__FINE__")
 
-def main():
-    try:
-        with open(INPUT_FILE, "r", encoding="utf-8") as f:
-            bandi = json.load(f)
+# def append_result_to_file(path, nuovo_risultato):
+#     """Aggiunge un nuovo risultato a un file JSON come lista di oggetti."""
+#     if os.path.exists(path):
+#         with open(path, "r", encoding="utf-8") as f:
+#             try:
+#                 dati = json.load(f)
+#                 if not isinstance(dati, list):
+#                     dati = []
+#             except json.JSONDecodeError:
+#                 dati = []
+#     else:
+#         dati = []
 
-        risultati = []
+#     dati.append(nuovo_risultato)
 
-        for item in bandi:
-            titolo = item.get("Titolo", "Senza titolo")
-            url = item.get("URL", "Senza URL")
-            testo = item.get("Contenuto", "")
+#     with open(path, "w", encoding="utf-8") as f:
+#         json.dump(dati, f, ensure_ascii=False, indent=4)
 
-            if not testo.strip():
-                print(f"[SKIP] Bando vuoto: {titolo}")
-                continue
+# def main():
+#     url_input = input("Inserisci l'URL da cui fare scraping: ").strip()
+#     if not url_input.startswith("http"):
+#         print("URL non valido.")
+#         return
 
-            print(f"[PROCESSING] {titolo}")
-            try:
-                # raw_response = timed_analysis(testo)
-                # risposta_json = clean_llm_response(raw_response)
-                risposta_json = timed_analysis(testo)
-                risultati.append({
-                    "Titolo": titolo,
-                    "URL": url,
-                    "Risposta": risposta_json
-                })
-            except Exception as e:
-                print(f"[ERRORE] {titolo}: {e}")
-                risultati.append({
-                    "Titolo": titolo,
-                    "Risposta": f"Errore: {e}"
-                })
+#     os.environ["SITE_TO_SCRAPE"] = url_input
 
-        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-            json.dump(risultati, f, ensure_ascii=False, indent=4)
+#     output_path = "../output/dataAnalyzed_local.json"
+#     os.makedirs("output", exist_ok=True)
 
-        print(f"[FINE] Output salvato in: {OUTPUT_FILE}")
+#     # Cancella il file se già esiste
+#     if os.path.exists(output_path):
+#         os.remove(output_path)
 
-    except FileNotFoundError:
-        print(f"File {INPUT_FILE} non trovato.")
-    except json.JSONDecodeError:
-        print("Errore nel parsing del file JSON.")
-    except Exception as e:
-        print(f"Errore imprevisto: {e}")
+#     print("Inizio scraping e analisi...")
 
-if __name__ == "__main__":
-    main()
+#     threading.Thread(target=run_crawler, daemon=True).start()
+
+#     while True:
+#         result = result_queue.get()
+#         if result == "__FINE__":
+#             break
+#         print("Risultato ricevuto:")
+#         print(json.dumps(result, ensure_ascii=False, indent=2))
+#         append_result_to_file(output_path, result)
+
+#     print(f"\nTutti i risultati sono stati salvati progressivamente in {output_path}")
+
+# if __name__ == "__main__":
+#     main()

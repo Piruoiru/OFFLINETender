@@ -5,3 +5,5 @@ ollama
 python-dotenv
 litellm
 flask
+langchain_community
+faiss-cpu

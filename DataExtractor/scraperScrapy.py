@@ -1,10 +1,14 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
 import json
 import PyPDF2
 from io import BytesIO
 from dotenv import load_dotenv
 import os
+import requests
+from scrapy.http import HtmlResponse
+
 
 load_dotenv()
 
@@ -27,28 +31,32 @@ class PDFScraper(scrapy.Spider):
             return f"Errore durante l'accesso al PDF: {e}"
 
     def parse(self, response):
-        """Analizza la pagina principale e trova i link ai file PDF."""
-        data_section = response.css('div.page-content')
-        if data_section:
-            links = data_section.css('a')
+        """Estrae solo i link PDF dal div con class='page-content'."""
+        page_content_div = response.css('div.page-content').get()
+        
+        if not page_content_div:
+            self.log("Nessun div.page-content trovato.")
+            return
 
-            for link in links:
-                # Estraggo tutto il testo compreso quello nidificato
-                title = ''.join(link.css('*::text').getall()).strip()
-                url = link.css('::attr(href)').get()
+        # Crea una nuova risposta Scrapy solo con quel div
+        partial_response = response.replace(body=page_content_div)
 
-                if url:
-                    # Controlla se ci sono altri URL all'interno di altri URL
-                    full_url = response.urljoin(url)
+        # Ora estrae solo link dal contenuto del div
+        links = partial_response.css('a')
 
-                    # Scarica tutti i file indipendentemente dal tipo
-                    yield scrapy.Request(
-                        url=full_url,
-                        callback=self.handle_file,
-                        meta={'title': title}
-                    )
-        else:
-            self.log("Sezione dati non trovata.")
+        for link in links:
+            title = ''.join(link.css('*::text').getall()).strip()
+            url = link.css('::attr(href)').get()
+
+            if url:
+                full_url = response.urljoin(url)
+                yield scrapy.Request(
+                    url=full_url,
+                    callback=self.handle_file,
+                    meta={'title': title}
+                )
+                
+
 
     def handle_file(self, response):
         """Gestisce i file scaricati in memoria."""

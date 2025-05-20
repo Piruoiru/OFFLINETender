@@ -1,6 +1,6 @@
 import json
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from embedderLocal import get_embedding
+# from embedderLocal import get_embedding
 from dotenv import load_dotenv
 import os
 

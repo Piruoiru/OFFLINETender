@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain.embeddings.base import Embeddings
 from langchain.docstore.document import Document
-from embedderLocal import get_embeddings_parallel
-from chunkizer import chunk_text
-from liteLLMAnalyzer import build_prompt_from_chunks, analyze_with_model
+from DataExtractor.embedderLocal import get_embeddings_parallel
+from DataExtractor.chunkizer import chunk_text
+from DataExtractor.liteLLMAnalyzer import build_prompt_from_chunks, analyze_with_model
 
 load_dotenv()
 
