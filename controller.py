@@ -12,6 +12,19 @@ result_queue = queue.Queue()
 
 class StreamingPDFScraper(PDFScraper):
     def handle_file(self, response):
+        """
+        Descrizione: 
+            Processa i PDF scaricati e analizza il contenuto con retrieval semantico.
+        
+        Input:
+            response: Oggetto Scrapy contenente il file scaricato.
+        
+        Output:
+            Nessuno (aggiunge i risultati a una coda).
+        
+        Comportamento: 
+            Estrae il contenuto del PDF, lo analizza con analyze_with_retrieval e mette il risultato in una coda.
+        """
         title = response.meta['title']
         url = response.url
         content_type = response.headers.get('Content-Type', b'').decode('utf-8')
@@ -40,12 +53,38 @@ class StreamingPDFScraper(PDFScraper):
         result_queue.put(risultato)
 
 def run_crawler():
+    """
+    Descrizione: 
+        Avvia il crawler Scrapy.
+    
+    Input: 
+        Nessuno.
+    
+    Output: 
+        Nessuno.
+    
+    Comportamento: 
+        Esegue il crawler e aggiunge un segnale di fine alla coda.
+    """
     process = CrawlerProcess(get_project_settings())
     process.crawl(StreamingPDFScraper)
     process.start()
     result_queue.put("__FINE__")
 
 def generate_analysis_stream(output_path):
+    """
+    Descrizione: 
+        Genera uno stream di risultati analizzati.
+    
+    Input:
+        output_path (str): Percorso del file di output.
+    
+    Output:
+        Generatore di stringhe JSON.
+    
+    Comportamento: 
+        Avvia il crawler in un thread separato e restituisce i risultati dalla coda.
+    """
     threading.Thread(target=run_crawler, daemon=True).start()
     while True:
         result = result_queue.get()

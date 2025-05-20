@@ -19,7 +19,19 @@ class PDFScraper(scrapy.Spider):
     extracted_data = []
 
     def process_pdf(self, response):
-        """Legge il contenuto di un PDF direttamente dalla risposta."""
+        """
+        Descrizione: 
+            Estrae il contenuto testuale di un PDF.
+        
+        Input:
+            response: Oggetto Scrapy contenente il file PDF.
+        
+        Output:
+            Stringa con il contenuto del PDF, oppure un messaggio di errore.
+        
+        Comportamento: 
+            Utilizza PyPDF2 per leggere il contenuto del PDF.
+        """
         try:
             pdf_file = BytesIO(response.body)
             reader = PyPDF2.PdfReader(pdf_file)
@@ -31,7 +43,19 @@ class PDFScraper(scrapy.Spider):
             return f"Errore durante l'accesso al PDF: {e}"
 
     def parse(self, response):
-        """Estrae solo i link PDF dal div con class='page-content'."""
+        """
+        Descrizione: 
+            Estrae i link ai PDF da una pagina web.
+        
+        Input:
+            response: Oggetto Scrapy contenente la risposta HTTP.
+        
+        Output:
+            Generatore di richieste Scrapy per scaricare i PDF.
+        
+        Comportamento: 
+            Cerca i link ai PDF all'interno di un div con classe page-content e li processa.
+        """
         page_content_div = response.css('div.page-content').get()
         
         if not page_content_div:
@@ -59,7 +83,19 @@ class PDFScraper(scrapy.Spider):
 
 
     def handle_file(self, response):
-        """Gestisce i file scaricati in memoria."""
+        """
+        Descrizione: 
+            Gestisce i file scaricati, estraendo il contenuto o salvando un messaggio generico.
+        
+        Input:
+            response: Oggetto Scrapy contenente il file scaricato.
+        
+        Output:
+            Nessuno (salva i dati estratti in una lista interna).
+        
+        Comportamento: 
+            Determina il tipo di file e processa il contenuto se è un PDF.
+        """
         title = response.meta['title']
         content_type = response.headers.get('Content-Type', b'').decode('utf-8')
 
@@ -78,7 +114,19 @@ class PDFScraper(scrapy.Spider):
         })
 
     def closed(self, reason):
-        """Salva i dati estratti quando il crawler termina."""
+        """
+        Descrizione: 
+            Salva i dati estratti in un file JSON quando il crawler termina.
+        
+        Input:
+            reason (str): Motivo della chiusura del crawler.
+        
+        Output:
+            Nessuno (salva i dati in un file).
+        
+        Comportamento: 
+            Scrive i dati estratti in dataScrapy.json.
+        """
         with open('output/dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
             json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
         self.log("Dati salvati in 'dataScrapy.json'.")

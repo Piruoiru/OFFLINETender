@@ -7,6 +7,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def analyze_with_model(content):
+    """
+    Descrizione: 
+        Analizza un testo utilizzando un modello LLM e restituisce i dati estratti in formato JSON.
+    
+    Input:
+        content (str): Testo da analizzare.
+    
+    Output:
+        Dizionario contenente i dati estratti o un messaggio di errore.
+    
+    Comportamento:
+        Costruisce un prompt dettagliato con le istruzioni per il modello.
+    
+    Invia il prompt al modello LLM tramite API.
+        Processa la risposta JSON e la restituisce.
+    """
     try:
         user_input = (
             f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
@@ -52,6 +68,19 @@ def analyze_with_model(content):
         return {"error": str(e)}
 
 def process_llm_response(response):
+    """
+    Descrizione: 
+        Pulisce e converte la risposta del modello LLM in un oggetto JSON.
+    
+    Input:
+        response (str): Risposta del modello LLM.
+    
+    Output:
+        Dizionario JSON, oppure un messaggio di errore se la risposta non è valida.
+    
+    Comportamento: 
+        Rimuove eventuali caratteri extra dalla risposta e tenta di decodificarla come JSON.
+    """
     try:
         cleaned_response = response.strip().strip("```json").strip("```").strip()
         json_response = json.loads(cleaned_response)
@@ -62,7 +91,17 @@ def process_llm_response(response):
     
 def build_prompt_from_chunks(chunks):
     """
-    Costruisce il prompt per l'LLM unendo i chunk rilevanti.
+    Descrizione: 
+        Costruisce un prompt per il modello LLM unendo i chunk rilevanti.
+    
+    Input:
+        chunks (list): Lista di oggetti Document contenenti i chunk di testo.
+    
+    Output:
+        Stringa rappresentante il prompt.
+    
+    Comportamento: 
+        Concatena i chunk e li aggiunge a un prompt base con istruzioni dettagliate.
     """
     base_prompt = (
         f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"

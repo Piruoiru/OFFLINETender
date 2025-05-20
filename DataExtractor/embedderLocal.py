@@ -12,38 +12,20 @@ ollama.base_url = os.getenv("MODEL_EMBEDDING_API")
 max_workers = int(os.getenv("MAX_WORKERS_PARALLEL_EMBEDDING"))
 model = os.getenv("MODEL_EMBEDDING")  
 
-# def get_embedding(text):
-#     """
-#     Genera l'embedding di un testo utilizzando il modello di embedding.
-    
-#     Args:
-#         text (str): Il testo per cui generare l'embedding.
-    
-#     Returns:
-#         list: L'embedding generato come lista di numeri.
-#     """
-#     # url = os.getenv("MODEL_EMBEDDING_API") 
-#     # payload = {
-#     #     "model": model, 
-#     #     "prompt": text
-#     # }
-#     # headers = {
-#     #     "Content-Type": "application/json"
-#     # }
-#     response = ollama.embeddings(model=model, prompt=text)
-
-#     try:
-#         embedding = response.get("embedding")
-#         if embedding is None:
-#             raise ValueError("Embedding non trovato nella risposta.")
-#         return embedding
-#     except ValueError as e:
-#         print(f"Errore nella risposta del server: {e}")
-#         return None
-    
 def get_embeddings_parallel(texts, max_workers=max_workers):
     """
-    Esegue embedding in parallelo su una lista di testi.
+    Descrizione: 
+        Esegue l'embedding di una lista di testi in parallelo.
+
+    Input:
+        texts (list): Lista di stringhe da trasformare in embedding.
+        max_workers (int): Numero massimo di thread da utilizzare.
+
+    Output:
+        Lista di vettori di embedding.
+    
+    Comportamento: 
+        Utilizza un pool di thread per calcolare gli embedding in parallelo chiamando la funzione get_embedding per ogni testo.
     """
     embeddings = [None] * len(texts)
     
@@ -62,6 +44,19 @@ def get_embeddings_parallel(texts, max_workers=max_workers):
     return embeddings
 
 def get_embedding(text):
+    """
+    Descrizione: 
+        Esegue una richiesta API per calcolare l'embedding di un singolo testo.
+
+    Input:
+        text (str): Testo da trasformare in embedding.
+
+    Output:
+        Vettore di embedding, oppure None in caso di errore.
+
+    Comportamento: 
+        Invia una richiesta POST all'API specificata, passando il testo come prompt.
+    """
     url = os.getenv("MODEL_EMBEDDING_API") + "/api/embeddings"
     payload = {"model": model, "prompt": text}
     headers = {"Content-Type": "application/json"}
