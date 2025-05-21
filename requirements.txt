@@ -7,3 +7,4 @@ litellm
 flask
 langchain_community
 faiss-cpu
+PyJWT

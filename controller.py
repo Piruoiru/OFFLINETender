@@ -68,7 +68,7 @@ def run_crawler():
     """
     process = CrawlerProcess(get_project_settings())
     process.crawl(StreamingPDFScraper)
-    process.start()
+    process.start(stop_after_crawl=True)
     result_queue.put("__FINE__")
 
 def generate_analysis_stream(output_path):

@@ -14,7 +14,9 @@ load_dotenv()
 
 class PDFScraper(scrapy.Spider):
     name = "pdf_scraper"
-    start_urls =[os.getenv("SITE_TO_SCRAPE")]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start_urls = [os.environ["SITE_TO_SCRAPE"]] 
 
     extracted_data = []
 
