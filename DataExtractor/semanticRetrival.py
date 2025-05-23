@@ -1,121 +1,110 @@
-import os
-import json
-import time
-from dotenv import load_dotenv
-from langchain_community.vectorstores import FAISS
-from langchain.embeddings.base import Embeddings
-from langchain.docstore.document import Document
-from DataExtractor.embedderLocal import get_embeddings_parallel
-from DataExtractor.chunkizer import chunk_text
-from DataExtractor.liteLLMAnalyzer import build_prompt_from_chunks, analyze_with_model
+from embedderLocal import get_embedding
+from pgvector_utils import connect_db
 
-load_dotenv()
+def retrieve_similar_chunks(query_text, top_k=5):
+    """
+    Recupera i chunk semanticamente più simili al testo dato.
 
-similarity_k = int(os.getenv("SIMILARITY_K", 4))
-k_chunk_embedding_piu_simile_alla_query = int(os.getenv("K_CHUNK_EMBEDDING_PIU_SIMILE_ALLA_QUERY", 4))
+    Args:
+        query_text (str): Testo di input da confrontare.
+        top_k (int): Numero massimo di chunk da restituire.
 
-class CustomEmbedding(Embeddings):
-    def embed_documents(self, texts):
-        """
-        Descrizione: 
-            Esegue l'embedding di una lista di documenti utilizzando una funzione parallela.
-        
-        Input:
-            texts (list): Lista di stringhe da trasformare in embedding.
-        
-        Output:
-            Lista di vettori di embedding.
-        
-        Comportamento: 
-            Utilizza la funzione get_embeddings_parallel per calcolare gli embedding in parallelo
-        """
-        return get_embeddings_parallel(texts)
+    Returns:
+        list[dict]: Lista di chunk simili con titolo, URL, testo e score.
+    """
+    query_embedding = get_embedding(query_text)
+    if query_embedding is None:
+        return [{"errore": "Embedding non disponibile."}]
 
-    def embed_query(self, text):
-        """
-        Descrizione: 
-            Esegue l'embedding di una singola query.
-        
-        Input:
-            text (str): Testo della query da trasformare in embedding.
-        
-        Output:
-            Un singolo vettore di embedding.
-        
-        Comportamento: 
-            sChiama get_embeddings_parallel passando una lista con un solo elemento e restituisce il primo risultato.
-        """
-        return get_embeddings_parallel([text])[0]
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT title, url, chunk, embedding <-> %s::vector AS score
+        FROM documentchunk
+        ORDER BY embedding <-> %s::vector
+        LIMIT %s
+    """, (query_embedding, query_embedding, top_k))
 
-def create_vectorstore(chunks):
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    risposta = []
+    for title, url, chunk, score in results:
+        risposta.append({
+            "Titolo": title,
+            "URL": url,
+            "Chunk": chunk,
+            "Score": score
+        })
+
+    return risposta
+
+def build_prompt_from_chunks(chunks):
     """
     Descrizione: 
-        Crea un vectorstore FAISS a partire da una lista di chunk di testo.
+        Costruisce un prompt per il modello LLM unendo i chunk rilevanti.
     
     Input:
-        chunks (list): Lista di stringhe rappresentanti i chunk di testo.
+        chunks (list): Lista di oggetti Document contenenti i chunk di testo.
     
     Output:
-        Un oggetto FAISS contenente i documenti e i loro embedding, oppure None in caso di errore.
+        Stringa rappresentante il prompt.
     
     Comportamento: 
-        Converte i chunk in oggetti Document, calcola gli embedding con CustomEmbedding e li salva in un vectorstore FAISS.
+        Concatena i chunk e li aggiunge a un prompt base con istruzioni dettagliate.
     """
-    try:
-        docs = [Document(page_content=chunk) for chunk in chunks]
-        embedding_model = CustomEmbedding()
-        return FAISS.from_documents(docs, embedding_model)
-    except Exception as e:
-        print(f"Errore durante la creazione del vectorstore: {e}")
-        return None
+    base_prompt = (
+        f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
+        f"- Provider (nome dell'organizzazione o azienda)\n"
+        f"- Data di pubblicazione\n"
+        f"- Data di termine di consegna\n"
+        f"- Tipologia di procedura\n"
+        f"- Finalità\n"
+        f"- Riferimento finanziamento\n"
+        f"- CUP\n"
+        f"- Titolo dell'intervento\n"
+        f"- Descrizione\n"
+        f"- Fondo\n"
+        f"- Caratteristiche richieste\n"
+        f"- Tempistiche\n"
+        f"- Budget massimo\n"
+        f"- Deadline\n"
+        f"- Mail a cui mandare la quota\n"
+        f"- Nome emittente\n"
+        f"- Modalità di pagamento\n"
+        f"- Pertinenza con l'azienda\n\n"
+        f"L'azienda si occupa di: 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. "
+        f"Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
+        f"Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
+        f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
+    )
+    joined_chunks = "\n\n".join([doc.page_content for doc in chunks])
+    return base_prompt + "Testo:\n" + joined_chunks
 
-def retrieve_top_k_chunks(vectorstore, query, k=similarity_k):
+def get_prompt_from_query(query_text, top_k=5):
     """
-    Descrizione:    
-        Recupera i k chunk più simili a una query utilizzando il vectorstore.
-    
-    Input:
-        vectorstore: Oggetto FAISS contenente i documenti e i loro embedding.
-        query (str): Query di ricerca.
-        k (int): Numero di risultati da restituire.
-    
-    Output:
-        Lista dei documenti più simili alla query.
-    
-    Comportamento: 
-        Utilizza la funzione similarity_search del vectorstore per trovare i chunk più rilevanti.
-    """
-    return vectorstore.similarity_search(query, k=k)
+    Descrizione:
+        Dato un testo di query, recupera i chunk semanticamente simili
+        e costruisce un prompt per il modello LLM.
 
-def analyze_with_retrieval(text, query="bando pubblico per digitalizzazione, sviluppo software e servizi IT", k=k_chunk_embedding_piu_simile_alla_query):
-    """
-    Descrizione: 
-        Analizza un testo eseguendo chunking, embedding, retrieval semantico e analisi con un modello LLM.
-    
-    Input:
-        text (str): Testo da analizzare.
-        query (str): Query di ricerca (default: "bando pubblico per digitalizzazione, sviluppo software e servizi IT").
-        k (int): Numero di chunk più simili da considerare.
-    
-    Output:
-        Risultato dell'analisi del modello LLM.
-    
-    Comportamento:
-        - Divide il testo in chunk.
-        - Crea un vectorstore con gli embedding dei chunk.
-        - Recupera i chunk più simili alla query.
-        - Costruisce un prompt con i chunk rilevanti.
-        - Invia il prompt al modello LLM per l'analisi.
-        - Restituisce il risultato e stampa i tempi di esecuzione.
-    """
-    
-    chunks = chunk_text(text)
+    Args:
+        query_text (str): Testo della query.
+        top_k (int): Numero di chunk da recuperare (default = 5).
 
-    vectorstore = create_vectorstore(chunks)
-    if vectorstore is None:
-        raise RuntimeError("Vectorstore non creato.")
-    top_chunks = retrieve_top_k_chunks(vectorstore, query=query, k=k)
-    prompt = build_prompt_from_chunks(top_chunks)
-    result = analyze_with_model(prompt)
+    Returns:
+        str: Prompt pronto per l'analisi da parte del modello LLM.
+    """
+    # 1. Recupera i chunk semanticamente simili
+    retrieved_chunks_data = retrieve_similar_chunks(query_text, top_k)
 
-    return result
+    # 2. Adatta i chunk in oggetti compatibili con build_prompt_from_chunks (che usa .page_content)
+    class SimpleDoc:
+        def __init__(self, content):
+            self.page_content = content
+
+    chunk_docs = [SimpleDoc(chunk["Chunk"]) for chunk in retrieved_chunks_data if "Chunk" in chunk]
+
+    # 3. Costruisce il prompt
+    prompt = build_prompt_from_chunks(chunk_docs)
+    return prompt

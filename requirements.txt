@@ -8,3 +8,5 @@ flask
 langchain_community
 faiss-cpu
 PyJWT
+psycopg2-binary
+pgvector[psycopg2]

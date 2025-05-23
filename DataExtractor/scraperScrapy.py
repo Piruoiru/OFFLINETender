@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 import requests
 from scrapy.http import HtmlResponse
-
+from handler import handle_file as process_and_store_pdf
 
 load_dotenv()
 
@@ -17,8 +17,6 @@ class PDFScraper(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.start_urls = [os.environ["SITE_TO_SCRAPE"]] 
-
-    extracted_data = []
 
     def process_pdf(self, response):
         """
@@ -77,58 +75,7 @@ class PDFScraper(scrapy.Spider):
             if url:
                 full_url = response.urljoin(url)
                 yield scrapy.Request(
-                    url=full_url,
-                    callback=self.handle_file,
-                    meta={'title': title}
-                )
-                
-
-
-    def handle_file(self, response):
-        """
-        Descrizione: 
-            Gestisce i file scaricati, estraendo il contenuto o salvando un messaggio generico.
-        
-        Input:
-            response: Oggetto Scrapy contenente il file scaricato.
-        
-        Output:
-            Nessuno (salva i dati estratti in una lista interna).
-        
-        Comportamento: 
-            Determina il tipo di file e processa il contenuto se è un PDF.
-        """
-        title = response.meta['title']
-        content_type = response.headers.get('Content-Type', b'').decode('utf-8')
-
-        if "application/pdf" in content_type:
-            # Processa il contenuto del PDF
-            content = self.process_pdf(response)
-        else:
-            # Per altri tipi di file salva solo un messaggio generico
-            content = f"File di tipo {content_type} scaricato."
-
-        # Aggiungi i dati estratti alla lista
-        self.extracted_data.append({
-            'Titolo': title,
-            'URL': response.url,
-            'Contenuto': content
-        })
-
-    def closed(self, reason):
-        """
-        Descrizione: 
-            Salva i dati estratti in un file JSON quando il crawler termina.
-        
-        Input:
-            reason (str): Motivo della chiusura del crawler.
-        
-        Output:
-            Nessuno (salva i dati in un file).
-        
-        Comportamento: 
-            Scrive i dati estratti in dataScrapy.json.
-        """
-        with open('output/dataScrapy.json', 'w', encoding='utf-8') as jsonfile:
-            json.dump(self.extracted_data, jsonfile, ensure_ascii=False, indent=4)
-        self.log("Dati salvati in 'dataScrapy.json'.")
+                url=full_url,
+                callback=process_and_store_pdf,
+                meta={'title': title}
+            )
