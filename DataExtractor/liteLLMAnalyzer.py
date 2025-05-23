@@ -25,29 +25,30 @@ def analyze_with_model(content):
     """
     try:
         user_input = (
-            f"Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
-            f"- Provider (nome dell'organizzazione o azienda)\n"
-            f"- Data di pubblicazione\n"
-            f"- Data di termine di consegna\n"
-            f"- Tipologia di procedura\n"
-            f"- Finalità\n"
-            f"- Riferimento finanziamento\n"
-            f"- CUP\n"
-            f"- Titolo dell'intervento\n"
-            f"- Descrizione\n"
-            f"- Fondo\n"
-            f"- Caratteristiche richieste\n"
-            f"- Tempistiche\n"
-            f"- Budget massimo\n"
-            f"- Deadline\n"
-            f"- Mail a cui mandare la quota\n"
-            f"- Nome emittente\n"
-            f"- Modalità di pagamento\n\n"
-            f"- Pertinenza con l'azienda\n\n"
-            f"L'azienda si occupa di: 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, gestione server, sviluppo software, fornitura licenze software'. "
-            f"Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
-            f"Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
-            f"Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
+            "Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
+            "- provider\n"
+            "- publication_date\n"
+            "- submission_deadline\n"
+            "- procedure_title\n"
+            "- purpose\n"
+            "- funding_reference\n"
+            "- cup\n"
+            "- intervention_title\n"
+            "- description\n"
+            "- fund\n"
+            "- required_characteristics\n"
+            "- timelines\n"
+            "- maximum_budget\n"
+            "- deadline\n"
+            "- email_for_quote\n"
+            "- issuer_name\n"
+            "- payment_method\n"
+            "- company_relevance\n\n"
+            "L'azienda si occupa di: 'Sviluppo siti web, consulenze informatiche, digitalizzazione, accessibilità, "
+            "gestione server, sviluppo software, fornitura licenze software'. "
+            "Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
+            "Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
+            "Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
 
@@ -64,7 +65,7 @@ def analyze_with_model(content):
         return process_llm_response(response)
 
     except Exception as e:
-        print(f"Errore durante la richiesta al server: {e}")
+        print(f"Errore durante l'analisi: {e}")
         return {"error": str(e)}
 
 def process_llm_response(response):

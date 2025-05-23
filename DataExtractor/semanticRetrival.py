@@ -1,29 +1,23 @@
-from embedderLocal import get_embedding
 from pgvector_utils import connect_db
 
-def retrieve_similar_chunks(query_text, top_k=5):
+def retrieve_top_chunks(top_k=5):
     """
-    Recupera i chunk semanticamente più simili al testo dato.
+    Recupera i chunk semanticamente più rilevanti.
 
     Args:
-        query_text (str): Testo di input da confrontare.
         top_k (int): Numero massimo di chunk da restituire.
 
     Returns:
-        list[dict]: Lista di chunk simili con titolo, URL, testo e score.
+        list[dict]: Lista di chunk rilevanti con titolo, URL, testo e score.
     """
-    query_embedding = get_embedding(query_text)
-    if query_embedding is None:
-        return [{"errore": "Embedding non disponibile."}]
-
     conn = connect_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT title, url, chunk, embedding <-> %s::vector AS score
+        SELECT title, url, chunk, score
         FROM documentchunk
-        ORDER BY embedding <-> %s::vector
+        ORDER BY score DESC
         LIMIT %s
-    """, (query_embedding, query_embedding, top_k))
+    """, (top_k,))
 
     results = cur.fetchall()
     cur.close()
@@ -96,7 +90,7 @@ def get_prompt_from_query(query_text, top_k=5):
         str: Prompt pronto per l'analisi da parte del modello LLM.
     """
     # 1. Recupera i chunk semanticamente simili
-    retrieved_chunks_data = retrieve_similar_chunks(query_text, top_k)
+    retrieved_chunks_data = retrieve_top_chunks(top_k)
 
     # 2. Adatta i chunk in oggetti compatibili con build_prompt_from_chunks (che usa .page_content)
     class SimpleDoc:
