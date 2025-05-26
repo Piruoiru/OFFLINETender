@@ -2,7 +2,7 @@ from scrapy.crawler import CrawlerProcess
 from scraperScrapy import PDFScraper, extracted_pdfs
 from chunkizer import chunk_text
 from embedderLocal import get_embeddings_parallel
-from pgvector_utils import insert_document_chunks, insert_response, retrieve_top_chunks_from_document, insert_sites
+from pgvector_utils import insert_document, insert_response, retrieve_top_chunks_from_document, insert_sites, insert_chunks
 from liteLLMAnalyzer import analyze_with_model
 from dotenv import load_dotenv
 import os
@@ -29,15 +29,14 @@ if __name__ == "__main__":
         site_url = os.environ["SITE_TO_SCRAPE"]
         site_id = insert_sites(site_url)
 
-        # ✅ Inserisce ogni chunk nel DB
-        document_id = insert_document_chunks(
-            title=pdf["title"],
-            url=pdf["url"],
-            chunks=chunk_texts,
-            embeddings=embeddings,
-            site_id=site_id,
-        )
-        print("📥 Chunk e embedding salvati in DB.")
+        # ✅ Inserisce ogni documento nel DB
+        document_id = insert_document(title=pdf["title"],url=pdf["url"],site_id=site_id)
+        print(f"📥 Documento salvato con ID: {document_id}")
+
+        # ✅ Inserise ogni chunk nel DB nella tabella `chunks`
+        insert_chunks(chunk_texts, embeddings, document_id)
+        print(f"📥 Chunks salvati")
+
 
         # 🔎 Recupera i 5 chunk più rappresentativi tra quelli appena inseriti
         top_chunks = retrieve_top_chunks_from_document(embeddings, chunk_texts, top_k=5)

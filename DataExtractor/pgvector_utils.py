@@ -2,12 +2,6 @@ import psycopg2
 from pgvector.psycopg2 import register_vector
 import os
 from dotenv import load_dotenv
-from chunkizer import chunk_text
-from embedderLocal import get_embeddings_parallel
-import PyPDF2
-from io import BytesIO
-import hashlib
-
 
 load_dotenv()
 
@@ -40,42 +34,44 @@ def insert_sites(site_url):
     conn.close()
     return site_id
 
-def insert_documents(title, url, chunk, embedding, site_id=None):
+def insert_chunks(chunks, embeddings, document_id):
+    """
+    Inserisce una lista di chunk e embedding associati nella tabella `chunks`.
+    """
     conn = connect_db()
     cur = conn.cursor()
+    chunk_ids = []
 
-    cur.execute("""
-        INSERT INTO documents (title, url, chunk, site_id, embedding)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (title, url, chunk, site_id, embedding))
-
+    for chunk, embedding in zip(chunks, embeddings):
+        if embedding is None:
+            continue  # Skip if embedding is None
+        cur.execute("""
+        INSERT INTO chunks (chunk, embedding, document_id)
+        VALUES (%s, %s, %s)
+        RETURNING id
+        """, (chunk, embedding, document_id))
+        chunk_ids.append(cur.fetchone()[0])
+    
     conn.commit()
     cur.close()
     conn.close()
+    return chunk_ids
 
-def insert_document_chunks(title, url, chunks, embeddings, site_id):
+def insert_document(title, url, site_id):
     """
-    Inserisce ogni chunk nella tabella `documents`.
-    Ritorna l'id del primo chunk inserito (come rappresentante del documento).
+    Inserisce ogni titolo e url nella tabella `documents`.
     """
     conn = connect_db()
     cur = conn.cursor()
     document_id = None
 
-    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-        if embedding is None:
-            continue
-        cur.execute("""
-            INSERT INTO documents (title, url, chunk, embedding, site_id)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id
-        """, (title, url, chunk, embedding, site_id))
-        
-        # Prendi l'id solo del primo chunk inserito
-        if document_id is None:
-            document_id = cur.fetchone()[0]
-        else:
-            cur.fetchone()  # consumare comunque il risultato per gli altri
+    cur.execute("""
+        INSERT INTO documents (title, url, site_id)
+        VALUES (%s, %s, %s)
+        RETURNING id
+    """, (title, url, site_id))
+
+    document_id = cur.fetchone()[0]  
 
     conn.commit()
     cur.close()

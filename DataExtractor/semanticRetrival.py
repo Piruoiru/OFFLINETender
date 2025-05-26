@@ -13,9 +13,9 @@ def retrieve_top_chunks(top_k=5):
     conn = connect_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT title, url, chunk, score
-        FROM documentchunk
-        ORDER BY score DESC
+        SELECT d.title, d.url, c.chunk
+        FROM chunks c
+        JOIN documents d ON c.document_id = d.id
         LIMIT %s
     """, (top_k,))
 
@@ -29,7 +29,6 @@ def retrieve_top_chunks(top_k=5):
             "Titolo": title,
             "URL": url,
             "Chunk": chunk,
-            "Score": score
         })
 
     return risposta
