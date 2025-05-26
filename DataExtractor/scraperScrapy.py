@@ -37,11 +37,13 @@ class PDFScraper(scrapy.Spider):
         partial_response = response.replace(body=page_content_div)
         links = partial_response.css('a')
 
+        links = sorted(links, key=lambda l: l.css("::attr(href)").get() or "")
+
         for link in links:
             title = ''.join(link.css('*::text').getall()).strip()
             url = link.css('::attr(href)').get()
 
-            if url:
+            if url and url.endswith(".pdf"):
                 full_url = response.urljoin(url)
                 yield scrapy.Request(
                     url=full_url,

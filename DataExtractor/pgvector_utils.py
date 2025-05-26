@@ -45,19 +45,24 @@ def insert_chunks(chunks, embeddings, document_id):
     for chunk, embedding in zip(chunks, embeddings):
         if embedding is None:
             continue  # Skip if embedding is None
+
+        # ✅ Rimuovi caratteri null dal chunk
+        clean_chunk = chunk.replace('\x00', '')
+
         cur.execute("""
         INSERT INTO chunks (chunk, embedding, document_id)
         VALUES (%s, %s, %s)
         RETURNING id
-        """, (chunk, embedding, document_id))
+        """, (clean_chunk, embedding, document_id))
         chunk_ids.append(cur.fetchone()[0])
+
     
     conn.commit()
     cur.close()
     conn.close()
     return chunk_ids
 
-def insert_document(title, url, site_id):
+def insert_document(title, url, hash, site_id):
     """
     Inserisce ogni titolo e url nella tabella `documents`.
     """
@@ -66,10 +71,10 @@ def insert_document(title, url, site_id):
     document_id = None
 
     cur.execute("""
-        INSERT INTO documents (title, url, site_id)
-        VALUES (%s, %s, %s)
+        INSERT INTO documents (title, url, hash, site_id)
+        VALUES (%s, %s, %s, %s)
         RETURNING id
-    """, (title, url, site_id))
+    """, (title, url, hash, site_id))
 
     document_id = cur.fetchone()[0]  
 
@@ -131,36 +136,36 @@ def insert_response(response_data, document_id=None):
     return response_id
 
 
-def normalize_llm_response(raw_response):
-    """
-    Converte i nomi dei campi da linguaggio naturale a snake_case per il DB.
-    """
-    mapping = {
-        "Provider": "provider",
-        "Data di pubblicazione": "data_di_pubblicazione",
-        "Data di termine di consegna": "data_di_termine_consegna",
-        "Tipologia di procedura": "titolo_procedura",
-        "Finalità": "finalita",
-        "Riferimento finanziamento": "riferimento_finanziamento",
-        "CUP": "cup",
-        "Titolo dell'intervento": "titolo_dell_intervento",
-        "Descrizione": "descrizione",
-        "Fondo": "fondo",
-        "Caratteristiche richieste": "caratteristiche_richieste",
-        "Tempistiche": "tempistiche",
-        "Budget massimo": "budget_massimo",
-        "Deadline": "deadline",
-        "Mail a cui mandare la quota": "mail_a_cui_mandare_la_quota",
-        "Nome emittente": "nome_emittente",
-        "Modalità di pagamento": "modalita_di_pagamento",
-        "Pertinenza con l'azienda": "pertinenza_con_lazienda"
-    }
+# def normalize_llm_response(raw_response):
+#     """
+#     Converte i nomi dei campi da linguaggio naturale a snake_case per il DB.
+#     """
+#     mapping = {
+#         "Provider": "provider",
+#         "Data di pubblicazione": "data_di_pubblicazione",
+#         "Data di termine di consegna": "data_di_termine_consegna",
+#         "Tipologia di procedura": "titolo_procedura",
+#         "Finalità": "finalita",
+#         "Riferimento finanziamento": "riferimento_finanziamento",
+#         "CUP": "cup",
+#         "Titolo dell'intervento": "titolo_dell_intervento",
+#         "Descrizione": "descrizione",
+#         "Fondo": "fondo",
+#         "Caratteristiche richieste": "caratteristiche_richieste",
+#         "Tempistiche": "tempistiche",
+#         "Budget massimo": "budget_massimo",
+#         "Deadline": "deadline",
+#         "Mail a cui mandare la quota": "mail_a_cui_mandare_la_quota",
+#         "Nome emittente": "nome_emittente",
+#         "Modalità di pagamento": "modalita_di_pagamento",
+#         "Pertinenza con l'azienda": "pertinenza_con_lazienda"
+#     }
 
-    normalized = {}
-    for old_key, new_key in mapping.items():
-        normalized[new_key] = raw_response.get(old_key, None)
+#     normalized = {}
+#     for old_key, new_key in mapping.items():
+#         normalized[new_key] = raw_response.get(old_key, None)
 
-    return normalized
+#     return normalized
 
 def retrieve_top_chunks_from_document(embeddings, chunks, top_k=5):
     """
@@ -178,3 +183,58 @@ def retrieve_top_chunks_from_document(embeddings, chunks, top_k=5):
 
     top_chunks = [chunks[i] for i in top_indices]
     return top_chunks
+
+# def document_is_fully_processed(doc_hash):
+#     """
+#     Verifica se il documento ha sia chunk che risposta.
+#     """
+#     conn = connect_db()
+#     cur = conn.cursor()
+#     cur.execute("""
+#         SELECT EXISTS (
+#             SELECT 1
+#             FROM documents d
+#             JOIN responses r ON r.document_id = d.id
+#             JOIN chunks c ON c.document_id = d.id
+#             WHERE d.hash = %s
+#         )
+#     """, (doc_hash,))
+#     result = cur.fetchone()[0]
+#     cur.close()
+#     conn.close()
+#     return result
+
+#     return result is not None
+
+def get_document_id_by_hash(doc_hash):
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM documents WHERE hash = %s", (doc_hash,))
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    return result[0] if result else None
+
+def document_has_chunks(doc_id):
+    """
+    Controlla se esistono chunk per il documento.
+    """
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM chunks WHERE document_id = %s LIMIT 1", (doc_id,))
+    result = cur.fetchone() is not None
+    cur.close()
+    conn.close()
+    return result
+
+def document_has_response(doc_id):
+    """
+    Controlla se esiste una risposta per il documento.
+    """
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM responses WHERE document_id = %s LIMIT 1", (doc_id,))
+    result = cur.fetchone() is not None
+    cur.close()
+    conn.close()
+    return result
