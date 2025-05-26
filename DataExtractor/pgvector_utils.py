@@ -10,8 +10,8 @@ def connect_db():
         dbname=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
-        host=os.getenv("POSTGRES_HOST", "localhost"),
-        port=os.getenv("POSTGRES_PORT", 5433)
+        host=os.getenv("POSTGRES_HOST"),
+        port=os.getenv("POSTGRES_PORT")
     )
     register_vector(conn)
     return conn
@@ -135,38 +135,6 @@ def insert_response(response_data, document_id=None):
     conn.close()
     return response_id
 
-
-# def normalize_llm_response(raw_response):
-#     """
-#     Converte i nomi dei campi da linguaggio naturale a snake_case per il DB.
-#     """
-#     mapping = {
-#         "Provider": "provider",
-#         "Data di pubblicazione": "data_di_pubblicazione",
-#         "Data di termine di consegna": "data_di_termine_consegna",
-#         "Tipologia di procedura": "titolo_procedura",
-#         "Finalità": "finalita",
-#         "Riferimento finanziamento": "riferimento_finanziamento",
-#         "CUP": "cup",
-#         "Titolo dell'intervento": "titolo_dell_intervento",
-#         "Descrizione": "descrizione",
-#         "Fondo": "fondo",
-#         "Caratteristiche richieste": "caratteristiche_richieste",
-#         "Tempistiche": "tempistiche",
-#         "Budget massimo": "budget_massimo",
-#         "Deadline": "deadline",
-#         "Mail a cui mandare la quota": "mail_a_cui_mandare_la_quota",
-#         "Nome emittente": "nome_emittente",
-#         "Modalità di pagamento": "modalita_di_pagamento",
-#         "Pertinenza con l'azienda": "pertinenza_con_lazienda"
-#     }
-
-#     normalized = {}
-#     for old_key, new_key in mapping.items():
-#         normalized[new_key] = raw_response.get(old_key, None)
-
-#     return normalized
-
 def retrieve_top_chunks_from_document(embeddings, chunks, top_k=5):
     """
     Ordina i chunk locali in base alla distanza coseno interna.
@@ -183,28 +151,6 @@ def retrieve_top_chunks_from_document(embeddings, chunks, top_k=5):
 
     top_chunks = [chunks[i] for i in top_indices]
     return top_chunks
-
-# def document_is_fully_processed(doc_hash):
-#     """
-#     Verifica se il documento ha sia chunk che risposta.
-#     """
-#     conn = connect_db()
-#     cur = conn.cursor()
-#     cur.execute("""
-#         SELECT EXISTS (
-#             SELECT 1
-#             FROM documents d
-#             JOIN responses r ON r.document_id = d.id
-#             JOIN chunks c ON c.document_id = d.id
-#             WHERE d.hash = %s
-#         )
-#     """, (doc_hash,))
-#     result = cur.fetchone()[0]
-#     cur.close()
-#     conn.close()
-#     return result
-
-#     return result is not None
 
 def get_document_id_by_hash(doc_hash):
     conn = connect_db()
