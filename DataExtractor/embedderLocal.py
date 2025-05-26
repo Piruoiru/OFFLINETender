@@ -1,5 +1,4 @@
 import requests
-import json
 from dotenv import load_dotenv
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
