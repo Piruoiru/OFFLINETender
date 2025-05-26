@@ -48,6 +48,8 @@ def analyze_with_model(content):
             "gestione server, sviluppo software, fornitura licenze software'. "
             "Valuta quanto il contenuto è pertinente rispetto a questo ambito. Fornisci una breve spiegazione o lascia vuoto se non pertinente.\n\n"
             "Se non trovi alcune informazioni, lascia il campo vuoto.\n\n"
+            "Non includere oggetti JSON o dizionari come valori nei campi. Tutti i campi devono essere stringhe semplici.\n\n"
+            "Non usare formati nidificati o array.\n\n"
             "Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
