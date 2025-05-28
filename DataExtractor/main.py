@@ -6,10 +6,14 @@ from pgvector_utils import (
     insert_document, insert_response, retrieve_top_chunks_from_document,
     insert_sites, insert_chunks, get_document_id_by_hash, document_has_chunks, document_has_response
 )
-from liteLLMAnalyzer import analyze_with_model
+from liteLLMAnalyzer import analyze_with_model,build_user_input
 from dotenv import load_dotenv
 from hasher import generate_hash
+from tokenizer import count_tokens
+from insertStatisticDB import insert_statistics
 import os
+import json
+
 
 load_dotenv()
 
@@ -63,9 +67,17 @@ if __name__ == "__main__":
                 print("🔎 Selezione top chunk per il prompt...")
                 top_chunks = retrieve_top_chunks_from_document(embeddings, chunk_texts, top_k=5)
                 prompt = "\n\n".join(top_chunks)
-
+                
+                user_input = build_user_input(prompt)
+                tokens_before = count_tokens(user_input)
+                
                 print("📤 Invio prompt al modello LLM...")
                 llm_response = analyze_with_model(prompt)
+
+                tokens_after = count_tokens(json.dumps(llm_response))
+
+                insert_statistics(document_id=document_id,token_prompt=tokens_before,token_response=tokens_after,prompt=json.dumps(user_input))
+                print(f"📊 Inserite le statistiche nel DB")
 
                 # Se l'analisi ha fallito
                 if not llm_response or "error" in llm_response:

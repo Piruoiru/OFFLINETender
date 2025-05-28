@@ -5,25 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def analyze_with_model(content):
-    """
-    Descrizione: 
-        Analizza un testo utilizzando un modello LLM e restituisce i dati estratti in formato JSON.
-    
-    Input:
-        content (str): Testo da analizzare.
-    
-    Output:
-        Dizionario contenente i dati estratti o un messaggio di errore.
-    
-    Comportamento:
-        Costruisce un prompt dettagliato con le istruzioni per il modello.
-    
-    Invia il prompt al modello LLM tramite API.
-        Processa la risposta JSON e la restituisce.
-    """
-    try:
-        user_input = (
+def build_user_input(content):
+    return (
             "Analizza il seguente testo e rispondi in formato JSON. Estrarre i seguenti dati, se presenti:\n"
             "- provider\n"
             "- publication_date\n"
@@ -52,6 +35,26 @@ def analyze_with_model(content):
             "Rispondi solo in formato JSON valido senza ```json. Non aggiungere testo extra.\n\n"
             f"Testo:\n{content}"
         )
+
+def analyze_with_model(content):
+    """
+    Descrizione: 
+        Analizza un testo utilizzando un modello LLM e restituisce i dati estratti in formato JSON.
+    
+    Input:
+        content (str): Testo da analizzare.
+    
+    Output:
+        Dizionario contenente i dati estratti o un messaggio di errore.
+    
+    Comportamento:
+        Costruisce un prompt dettagliato con le istruzioni per il modello.
+    
+    Invia il prompt al modello LLM tramite API.
+        Processa la risposta JSON e la restituisce.
+    """
+    try:
+        user_input = build_user_input(content)
 
         chat_completion = completion(
             messages=[{"role": "user", "content": user_input}],

@@ -37,7 +37,7 @@ class PDFScraper(scrapy.Spider):
         partial_response = response.replace(body=page_content_div)
         links = partial_response.css('a')
 
-        links = sorted(links, key=lambda l: l.css("::attr(href)").get() or "")
+        # links = sorted(links, key=lambda l: l.css("::attr(href)").get() or "")
 
         for link in links:
             title = ''.join(link.css('*::text').getall()).strip()
