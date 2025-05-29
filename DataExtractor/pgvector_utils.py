@@ -135,7 +135,7 @@ def insert_response(response_data, document_id=None):
     conn.close()
     return response_id
 
-def retrieve_top_chunks_from_document(embeddings, chunks, top_k=5):
+def retrieve_top_chunks_from_document(embeddings, chunks, top_k):
     """
     Ordina i chunk locali in base alla distanza coseno interna.
     """

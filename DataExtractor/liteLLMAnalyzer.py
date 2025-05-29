@@ -62,7 +62,6 @@ def analyze_with_model(content):
             api_base=os.getenv("MODEL_LLM_API"),
             temperature=float(os.getenv("MODEL_TEMPERATURE")),
             max_tokens=int(os.getenv("MODEL_MAX_TOKENS")),
-            # timeout=1200
         )
 
         response = chat_completion["choices"][0]["message"]["content"]

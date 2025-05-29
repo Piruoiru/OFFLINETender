@@ -10,7 +10,7 @@ from liteLLMAnalyzer import analyze_with_model,build_user_input
 from dotenv import load_dotenv
 from hasher import generate_hash
 from tokenizer import count_tokens
-from insertStatisticDB import insert_statistics
+from insertStatisticDB import insert_statistics, update_number_response_llm
 import os
 import json
 
@@ -65,7 +65,8 @@ if __name__ == "__main__":
         if not has_response:
             try:
                 print("🔎 Selezione top chunk per il prompt...")
-                top_chunks = retrieve_top_chunks_from_document(embeddings, chunk_texts, top_k=5)
+                top_k = min(10, len(chunk_texts))  # Assicurati che top_k non superi il numero di chunk
+                top_chunks = retrieve_top_chunks_from_document(embeddings, chunk_texts, top_k=top_k)
                 prompt = "\n\n".join(top_chunks)
                 
                 user_input = build_user_input(prompt)
@@ -93,3 +94,6 @@ if __name__ == "__main__":
                 continue
         else:
             print("ℹ️ Risposta già presente, salto analisi.")
+
+        print("✅ Aggiorna il numero di risposte LLM nella tabella statistics")
+        
