@@ -10,7 +10,7 @@ from liteLLMAnalyzer import analyze_with_model,build_user_input
 from dotenv import load_dotenv
 from hasher import generate_hash
 from tokenizer import count_tokens
-from insertStatisticDB import insert_statistics, update_number_response_llm
+from insertStatisticDB import insert_statistics
 import os
 import json
 
@@ -77,9 +77,6 @@ if __name__ == "__main__":
 
                 tokens_after = count_tokens(json.dumps(llm_response))
 
-                insert_statistics(document_id=document_id,token_prompt=tokens_before,token_response=tokens_after,prompt=json.dumps(user_input))
-                print(f"📊 Inserite le statistiche nel DB")
-
                 # Se l'analisi ha fallito
                 if not llm_response or "error" in llm_response:
                     print(f"❌ Errore nella risposta LLM: {llm_response.get('error') if isinstance(llm_response, dict) else 'Nessuna risposta'}")
@@ -88,6 +85,9 @@ if __name__ == "__main__":
                 print("✅ Risposta ricevuta. Salvataggio nel DB...")
                 response_id = insert_response(llm_response, document_id=document_id)
                 print(f"💾 Risposta salvata con ID: {response_id}")
+
+                statistics_id = insert_statistics(document_id=document_id,token_prompt=tokens_before,token_response=tokens_after,prompt=json.dumps(user_input))
+                print(f"📊 Statistiche salvate con ID: {statistics_id}")
 
             except Exception as e:
                 print(f"❌ Eccezione durante analisi o salvataggio risposta: {e}")
