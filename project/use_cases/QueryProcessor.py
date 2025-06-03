@@ -1,5 +1,10 @@
-from ContextExtractor import ContextExtractor
-from LLMResponceService import LLMResponseService
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from project.use_cases.ContextExtractor import ContextExtractor
+from project.adapters.LLM.LLMResponceService import LLMResponseService
 
 class QueryProcessor:
     def __init__(self):

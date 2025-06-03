@@ -1,6 +1,5 @@
-from DataExtractor.pgvector_utils import connect_db
+from project.adapters.database.pgvector_utils import connect_db
 import psycopg2.extras
-from sentence_transformers import CrossEncoder
 
 class LoaderDB:
     def __init__(self):

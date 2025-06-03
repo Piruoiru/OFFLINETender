@@ -1,7 +1,7 @@
 services:
   flask:
     build: .
-    env_file: .env
+    env_file: ../config/.env 
     depends_on:
       - litellm
     volumes:
@@ -17,7 +17,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 14G
+          memory: 4G
     networks:
       - backend
 
@@ -27,7 +27,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./litellm_config.yaml:/app/litellm_config.yaml
+      - ../config/litellm_config.yaml:/app/litellm_config.yaml
     environment:
       - LITELLM_CONFIG_PATH=/app/litellm_config.yaml
     depends_on:

@@ -4,7 +4,8 @@ import os
 import subprocess
 from auth.jwt_handler import generate_token, verify_token, get_token_from_request
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 app = Flask(__name__)
 

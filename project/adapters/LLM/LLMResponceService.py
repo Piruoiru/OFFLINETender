@@ -2,7 +2,8 @@ import os
 from litellm import completion
 from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 class LLMResponseService:
     def __init__(self, model=None):

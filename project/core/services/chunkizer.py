@@ -2,7 +2,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 chunk_size = int(os.getenv("CHUNK_SIZE"))
 chunk_overlap = int(os.getenv("CHUNK_OVERLAP"))

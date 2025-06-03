@@ -4,7 +4,8 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ollama
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 ollama.base_url = os.getenv("MODEL_EMBEDDING_API")
 
@@ -65,8 +66,8 @@ def get_embedding(text):
         response.raise_for_status()
         data = response.json()
         embedding = data.get("embedding")
-        if embedding is None:
-            raise ValueError("Embedding non trovato nella risposta.")
+        if not embedding or not isinstance(embedding, list):
+            raise ValueError("Embedding non trovato o non valido nella risposta.")
         return embedding
     except Exception as e:
         print(f"Errore nella richiesta embedding: {e}")

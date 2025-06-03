@@ -3,7 +3,8 @@ from pgvector.psycopg2 import register_vector
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 def connect_db():
     conn = psycopg2.connect(
@@ -62,7 +63,7 @@ def insert_chunks(chunks, embeddings, document_id):
     conn.close()
     return chunk_ids
 
-def insert_document(title, url, hash, site_id, document_embedding):
+def insert_document(title, url, hash, site_id, document_embedding, content):
     """
     Inserisce ogni titolo e url nella tabella `documents`.
     """
@@ -71,10 +72,10 @@ def insert_document(title, url, hash, site_id, document_embedding):
     document_id = None
 
     cur.execute("""
-        INSERT INTO documents (title, url, hash, site_id, document_embedding)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO documents (title, url, hash, site_id, document_embedding, content)
+        VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING id
-    """, (title, url, hash, site_id, document_embedding))
+    """, (title, url, hash, site_id, document_embedding, content))
 
     document_id = cur.fetchone()[0]  
 
@@ -184,3 +185,35 @@ def document_has_response(doc_id):
     cur.close()
     conn.close()
     return result
+
+# def load_documents(self):
+#         """
+#         Carica tutti i documenti dal DB con il loro embedding.
+#         """
+#         with self.dbConnection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+#             cursor.execute("SELECT id, title, url, document_embedding FROM documents WHERE document_embedding IS NOT NULL")
+#             rows = cursor.fetchall()
+
+#         documents = []
+#         for row in rows:
+#             documents.append({
+#                 'id': row['id'],
+#                 'title': row['title'],
+#                 'url': row['url'],
+#                 'embedding': row['document_embedding']
+#             })
+#         return documents
+    
+def get_chunks_by_document_id(self, document_id):
+    """
+    Recupera tutti i chunk e i relativi embedding per un dato documento.
+    """
+    conn = connect_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT id, chunk, embedding FROM chunks WHERE document_id = %s", (document_id,))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return rows

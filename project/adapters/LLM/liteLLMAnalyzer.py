@@ -3,7 +3,8 @@ import json
 from litellm import completion
 from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 def build_user_input(content):
     return (

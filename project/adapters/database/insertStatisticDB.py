@@ -3,7 +3,8 @@ from pgvector.psycopg2 import register_vector
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 def connect_db():
     conn = psycopg2.connect(

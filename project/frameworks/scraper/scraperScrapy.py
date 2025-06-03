@@ -2,13 +2,16 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 import PyPDF2
 from io import BytesIO
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 # Lista globale per salvare i contenuti
 extracted_pdfs = []
 
-load_dotenv()
+
 
 class PDFScraper(scrapy.Spider):
     name = "pdf_scraper"

@@ -1,21 +1,26 @@
-from scrapy.crawler import CrawlerProcess
-from scraperScrapy import PDFScraper, extracted_pdfs
-from chunkizer import chunk_text
-from embedderLocal import get_embeddings_parallel, get_embedding
-from pgvector_utils import (
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from project.core.services.chunkizer import chunk_text
+from project.core.services.embedderLocal import get_embeddings_parallel, get_embedding
+from project.frameworks.scraper.scraperScrapy import PDFScraper, extracted_pdfs
+from project.adapters.LLM.liteLLMAnalyzer import analyze_with_model,build_user_input
+from project.core.services.hasher import generate_hash
+from project.core.services.tokenizer import count_tokens
+from project.adapters.database.insertStatisticDB import insert_statistics
+from project.adapters.database.pgvector_utils import (
     insert_document, insert_response, retrieve_top_chunks_from_document,
     insert_sites, insert_chunks, get_document_id_by_hash, document_has_chunks, document_has_response
 )
-from liteLLMAnalyzer import analyze_with_model,build_user_input
+
+from scrapy.crawler import CrawlerProcess
 from dotenv import load_dotenv
-from hasher import generate_hash
-from tokenizer import count_tokens
-from insertStatisticDB import insert_statistics
-import os
 import json
 
-
-load_dotenv()
+dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
+load_dotenv(dotenv_path)
 
 if __name__ == "__main__":
     print("▶ Inizio del processo di scraping...")
@@ -40,10 +45,15 @@ if __name__ == "__main__":
         else:
             site_url = os.environ["SITE_TO_SCRAPE"]
             site_id = insert_sites(site_url)
-            print(f"🧠 Generazione Embedding del testo con ID: {document_id}")
+            print(f"🧠 Generazione Embedding del testo")
             emdedding_document = get_embedding(pdf["content"]) #aggiunto questo
+
+            if not emdedding_document or not isinstance(emdedding_document, list):
+                print(f"❌ Embedding non valido per il documento: {pdf['url']}")
+                continue
+            
             document_id = insert_document(
-                title=pdf["title"], url=pdf["url"], hash=doc_hash, site_id=site_id, document_embedding=emdedding_document
+                title=pdf["title"], url=pdf["url"], hash=doc_hash, site_id=site_id, document_embedding=emdedding_document, content=pdf["content"]
             )
             print(f"📥 Documento inserito con ID: {document_id}")
             has_chunks = False
@@ -98,4 +108,3 @@ if __name__ == "__main__":
             print("ℹ️ Risposta già presente, salto analisi.")
 
         print("✅ Aggiorna il numero di risposte LLM nella tabella statistics")
-        

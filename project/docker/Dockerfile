@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Comando per avviare l'app Flask
-CMD ["python", "analyzer.py"]
+CMD ["python", "../frameworks/flask_app/analyzer.py"]

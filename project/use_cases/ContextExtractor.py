@@ -1,7 +1,12 @@
-from DataExtractor.embedderLocal import get_embedding
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from project.core.services.embedderLocal import get_embedding
 from sklearn.metrics.pairwise import cosine_similarity
+from project.adapters.loader.LoaderDB import LoaderDB 
 from sentence_transformers import CrossEncoder
-from LoaderDB import LoaderDB  # ✅ aggiunto import
 
 TOP_CHUNKS = 10
 FINAL_TOP = 3
@@ -10,9 +15,8 @@ CROSS_ENCODER_MODEL = 'cross-encoder/ms-marco-electra-base'
 class ContextExtractor:
     def __init__(self):
         self.cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
-        self.loader = LoaderDB()  # ✅ istanzia LoaderDB
-        self.documents = self.loader.documents  # ✅ carica documenti una volta sola
-
+        self.loader = LoaderDB() 
+        self.documents = self.loader.documents 
     def process_user_input(self, user_input: str):
         user_embedding = get_embedding(user_input)
         if user_embedding is None:
@@ -31,7 +35,7 @@ class ContextExtractor:
         top_doc_id = similarities[0]['id']
 
         # 🔹 Recupero chunk tramite LoaderDB
-        chunk_rows = self.loader.get_chunks_by_document_id(top_doc_id)  # ✅ usa metodo da LoaderDB
+        chunk_rows = self.loader.get_chunks_by_document_id(top_doc_id) 
 
         candidate_chunks = []
         for row in chunk_rows:
