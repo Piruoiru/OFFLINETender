@@ -1,7 +1,7 @@
 from scrapy.crawler import CrawlerProcess
 from scraperScrapy import PDFScraper, extracted_pdfs
 from chunkizer import chunk_text
-from embedderLocal import get_embeddings_parallel
+from embedderLocal import get_embeddings_parallel, get_embedding
 from pgvector_utils import (
     insert_document, insert_response, retrieve_top_chunks_from_document,
     insert_sites, insert_chunks, get_document_id_by_hash, document_has_chunks, document_has_response
@@ -40,8 +40,10 @@ if __name__ == "__main__":
         else:
             site_url = os.environ["SITE_TO_SCRAPE"]
             site_id = insert_sites(site_url)
+            print(f"🧠 Generazione Embedding del testo con ID: {document_id}")
+            emdedding_document = get_embedding(pdf["content"]) #aggiunto questo
             document_id = insert_document(
-                title=pdf["title"], url=pdf["url"], hash=doc_hash, site_id=site_id
+                title=pdf["title"], url=pdf["url"], hash=doc_hash, site_id=site_id, document_embedding=emdedding_document
             )
             print(f"📥 Documento inserito con ID: {document_id}")
             has_chunks = False

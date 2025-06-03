@@ -62,7 +62,7 @@ def insert_chunks(chunks, embeddings, document_id):
     conn.close()
     return chunk_ids
 
-def insert_document(title, url, hash, site_id):
+def insert_document(title, url, hash, site_id, document_embedding):
     """
     Inserisce ogni titolo e url nella tabella `documents`.
     """
@@ -71,10 +71,10 @@ def insert_document(title, url, hash, site_id):
     document_id = None
 
     cur.execute("""
-        INSERT INTO documents (title, url, hash, site_id)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO documents (title, url, hash, site_id, document_embedding)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id
-    """, (title, url, hash, site_id))
+    """, (title, url, hash, site_id, document_embedding))
 
     document_id = cur.fetchone()[0]  
 
