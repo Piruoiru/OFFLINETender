@@ -1,4 +1,4 @@
-from project.adapters.database.pgvector_utils import connect_db
+from Project.Adapters.Database.PgVectorUtils import connect_db
 import psycopg2.extras
 
 class LoaderDB:

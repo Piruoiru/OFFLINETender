@@ -3,14 +3,14 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from project.core.services.chunkizer import chunk_text
-from project.core.services.embedderLocal import get_embeddings_parallel, get_embedding
-from project.frameworks.scraper.scraperScrapy import PDFScraper, extracted_pdfs
-from project.adapters.LLM.liteLLMAnalyzer import analyze_with_model,build_user_input
-from project.core.services.hasher import generate_hash
-from project.core.services.tokenizer import count_tokens
-from project.adapters.database.insertStatisticDB import insert_statistics
-from project.adapters.database.pgvector_utils import (
+from Project.Core.Services.Chunkizer import chunk_text
+from Project.Core.Services.EmbedderLocal import get_embeddings_parallel, get_embedding
+from Project.Frameworks.Scraper.ScraperScrapy import PDFScraper, extracted_pdfs
+from Project.Adapters.LLM.LiteLLMAnalyzer import analyze_with_model,build_user_input
+from Project.Core.Services.Hasher import generate_hash
+from Project.Core.Services.Tokenizer import count_tokens
+from Project.Adapters.Database.InsertStatisticDB import insert_statistics
+from Project.Adapters.Database.PgVectorUtils import (
     insert_document, insert_response, retrieve_top_chunks_from_document,
     insert_sites, insert_chunks, get_document_id_by_hash, document_has_chunks, document_has_response
 )

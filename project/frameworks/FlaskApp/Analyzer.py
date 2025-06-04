@@ -1,8 +1,9 @@
+from Project.Adapters.Auth.JwtHandler import generate_token, verify_token, get_token_from_request
+
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
 import subprocess
-from auth.jwt_handler import generate_token, verify_token, get_token_from_request
 
 dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
 load_dotenv(dotenv_path)
