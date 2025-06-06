@@ -32,11 +32,16 @@ class QueryProcessor:
 
         # Recupera la cronologia precedente
         history = self.chat_history_service.get_history(self.conversation_id)
-        history_text = "\n".join([f"{sender.capitalize()}: {msg}" for sender, msg in history])
+        # PER STORICO TOTALE
+        # history_text = "\n".join([f"{sender.capitalize()}: {msg}" for sender, msg in history])
+        # PER ULTIMI 3 MESSAGGI
+        # last_messages = history[-3:]  # Prende solo gli ultimi 3
+        # history_text = "\n".join([f"{sender.capitalize()}: {msg}" for sender, msg in last_messages])
 
-        prompt = (
+        prompt = (  
             f"Contesto:\n{context_text}\n\n"
-            f"{history_text}\n"
+            # PER DECIDERE LO STORICO DA USARE
+            # f"{history_text}\n"
             f"Assistant:"
         )
 
@@ -50,17 +55,3 @@ class QueryProcessor:
             return response
         except Exception as e:
             return {"error": f"Errore dal modello LLM: {str(e)}"}
-
-
-if __name__ == "__main__":
-    use_existing = input("Vuoi continuare una conversazione esistente? (s/n): ").strip().lower()
-
-    if use_existing == "s":
-        conversation_id = input("Inserisci l'ID della conversazione: ").strip()
-    else:
-        conversation_id = None
-
-    qp = QueryProcessor(conversation_id)
-    user_query = input("Inserisci la tua domanda: ").strip()
-    result = qp.run(user_query)
-    print("\nRisposta:\n", result)

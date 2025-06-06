@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\BooleanColumn;
 
 class ConversationResource extends Resource
 {
@@ -38,7 +39,7 @@ class ConversationResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->searchable(),
-                Tables\Columns\IconColumn::make('active')->label('Active')->boolean(),
+                BooleanColumn::make('active')
             ])
             ->filters([
                 //

@@ -11,3 +11,5 @@ Route::get('/user', function (Request $request) {
 Route::get('/conversations', [ConversationController::class, 'conversations']);
 Route::get('/conversations/{id}/messages', [ConversationController::class, 'messages']);
 Route::post('/conversations/{id}/messages', [ConversationController::class, 'storeMessage']);
+Route::post('/chat', [ConversationController::class, 'chat']);
+Route::post('/create-conversation', [ConversationController::class, 'createConversation']);

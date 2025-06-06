@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Http;
 
 class ConversationController extends Controller
 {
@@ -14,6 +16,32 @@ class ConversationController extends Controller
     {
         return response()->json(Conversation::all());
     }
+
+    // Crea una nuova conversazione
+    public function createConversation(Request $request)
+    {
+        $validated = $request->validate([
+            'active' => 'nullable|boolean',
+        ]);
+
+        try {
+            $conversation = Conversation::create([
+                'active' => $validated['active'] ?? true, // Usa true se non viene fornito
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'conversation' => $conversation
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Errore nella creazione della conversazione.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     // Ritorna tutti i messaggi di una conversazione specifica
     public function messages($id)
@@ -39,4 +67,35 @@ class ConversationController extends Controller
 
         return response()->json($message, 201);
     }
+
+    public function chat(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'conversation_id' => 'required|integer',
+        ]);
+
+        try {
+            $response = Http::timeout(300)->post('http://127.0.0.1:5050/chat', [
+                'message' => $request->input('message'),
+                'conversation_id' => $request->input('conversation_id'),
+            ]);
+
+            if ($response->failed()) {
+                return response()->json([
+                    'error' => 'Errore dal backend Python',
+                    'details' => $response->json(),
+                ], 500);
+            }
+
+            return response()->json($response->json());
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Errore nella comunicazione con il backend Python',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }
