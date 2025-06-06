@@ -27,9 +27,17 @@ class MessageResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('active')
+                Forms\Components\TextInput::make('conversation_id')
                     ->required()
                     ->numeric(),
+                Forms\Components\TextInput::make('sender')
+                    ->required()
+                    ->numeric()
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('content')
+                    ->required()
+                    ->numeric()
+                    ->maxLength(65535),
             ]);
     }
 
@@ -38,7 +46,9 @@ class MessageResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->searchable(),
-                Tables\Columns\TextColumn::make('active')->searchable(),
+                Tables\Columns\TextColumn::make('conversation_id')->searchable(),
+                Tables\Columns\TextColumn::make('sender')->searchable(),
+                Tables\Columns\TextColumn::make('content')->searchable(),
             ])
             ->filters([
                 //
