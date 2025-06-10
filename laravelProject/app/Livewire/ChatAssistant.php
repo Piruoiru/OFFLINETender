@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\Http;
 
 class ChatAssistant extends Component
 {
@@ -10,6 +11,9 @@ class ChatAssistant extends Component
     public $activeConversation;
     public $messages = [];
     public $newMessage = '';
+    public $showModal = false;
+    public $newConversationTitle = '';
+    public $newConversationActive = true;
 
     public function mount()
     {
@@ -66,18 +70,72 @@ class ChatAssistant extends Component
         }
     }
 
+    // public function sendMessage()
+    // {
+    //     if (trim($this->newMessage) === '' || !$this->activeConversation) return;
+
+    //     // Mostra subito il messaggio dell’utente
+    //     $this->messages[] = [
+    //         'sender' => 'user',
+    //         'message' => $this->newMessage
+    //     ];
+
+    //     $userMessage = $this->newMessage;
+    //     $this->newMessage = '';
+
+    //     // Mostra messaggio "in elaborazione"
+    //     $this->messages[] = [
+    //         'sender' => 'assistant',
+    //         'message' => 'Sto pensando...'
+    //     ];
+
+    //     try {
+    //         \Http::post(url("/api/conversations/{$this->activeConversation}/messages"), [
+    //             'content' => $userMessage
+    //         ]);
+
+    //         $response = \Http::timeout(300)->post(url('/api/chat'), [
+    //             'message' => $userMessage,
+    //             'conversation_id' => $this->activeConversation,
+    //         ]);
+
+    //         if ($response->successful()) {
+    //             $reply = $response->json()['reply'] ?? '[Nessuna risposta dal modello]';
+
+    //             // Rimuovi "Sto pensando..." e metti risposta vera
+    //             array_pop($this->messages); // rimuove ultimo (placeholder)
+    //             $this->messages[] = [
+    //                 'sender' => 'assistant',
+    //                 'message' => $reply
+    //             ];
+    //         } else {
+    //             array_pop($this->messages);
+    //             $this->messages[] = [
+    //                 'sender' => 'system',
+    //                 'message' => 'Errore durante la comunicazione con il modello.'
+    //             ];
+    //         }
+    //     } catch (\Exception $e) {
+    //         array_pop($this->messages);
+    //         $this->messages[] = [
+    //             'sender' => 'system',
+    //             'message' => 'Errore: ' . $e->getMessage()
+    //         ];
+    //     }
+    // }
+
     public function sendMessage()
     {
         if (trim($this->newMessage) === '' || !$this->activeConversation) return;
 
+        $userMessage = $this->newMessage;
+        $this->newMessage = '';
+
         // Mostra subito il messaggio dell’utente
         $this->messages[] = [
             'sender' => 'user',
-            'message' => $this->newMessage
+            'message' => $userMessage
         ];
-
-        $userMessage = $this->newMessage;
-        $this->newMessage = '';
 
         // Mostra messaggio "in elaborazione"
         $this->messages[] = [
@@ -85,23 +143,28 @@ class ChatAssistant extends Component
             'message' => 'Sto pensando...'
         ];
 
+        // Salva il messaggio dell'utente in background (non serve risposta)
+        \Http::post(url("/api/conversations/{$this->activeConversation}/messages"), [
+            'content' => $userMessage
+        ]);
+
         try {
             $response = \Http::timeout(300)->post(url('/api/chat'), [
                 'message' => $userMessage,
                 'conversation_id' => $this->activeConversation,
             ]);
 
+            // Rimuovi "Sto pensando..." e metti risposta vera
+            array_pop($this->messages);
+
             if ($response->successful()) {
                 $reply = $response->json()['reply'] ?? '[Nessuna risposta dal modello]';
 
-                // Rimuovi "Sto pensando..." e metti risposta vera
-                array_pop($this->messages); // rimuove ultimo (placeholder)
                 $this->messages[] = [
                     'sender' => 'assistant',
                     'message' => $reply
                 ];
             } else {
-                array_pop($this->messages);
                 $this->messages[] = [
                     'sender' => 'system',
                     'message' => 'Errore durante la comunicazione con il modello.'
@@ -135,6 +198,39 @@ class ChatAssistant extends Component
                     'message' => $msg['content'] ?? $msg['message'],
                 ];
             })->toArray();
+        }
+    }
+
+    public function openModal()
+    {
+        $this->showModal = true;
+    }
+
+    public function closeModal()
+    {
+        $this->reset(['showModal', 'newConversationTitle', 'newConversationActive']);
+    }
+
+    public function createConversation()
+    {
+        $response = Http::post(url('/api/create-conversation'), [
+            'title' => $this->newConversationTitle,
+            'active' => (bool) $this->newConversationActive,
+        ]);
+
+        if ($response->successful()) {
+            $newConversation = $response->json()['conversation'];
+
+            // Aggiungi la nuova conversazione alla lista
+            $this->conversations[] = $newConversation;
+
+            // Seleziona subito la nuova conversazione
+            $this->selectConversation($newConversation['id']);
+
+            $this->closeModal();
+        }else {
+            // Gestione errore
+            session()->flash('error', 'Errore nella creazione della conversazione.');
         }
     }
 }
