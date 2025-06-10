@@ -31,6 +31,9 @@ class ConversationResource extends Resource
                 Forms\Components\TextInput::make('active')
                     ->required()
                     ->numeric(),
+                Forms\Components\Textarea::make('title')
+                    ->required()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -39,6 +42,7 @@ class ConversationResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->searchable(),
+                Tables\Columns\TextColumn::make('title')->searchable(),
                 BooleanColumn::make('active')
             ])
             ->filters([

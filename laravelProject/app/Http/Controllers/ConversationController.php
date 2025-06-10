@@ -14,18 +14,21 @@ class ConversationController extends Controller
     // Ritorna tutte le conversazioni
     public function conversations()
     {
-        return response()->json(Conversation::all());
+        $conversations = Conversation::select('id', 'title', 'active', 'created_at')->get();
+        return response()->json($conversations);
     }
 
     // Crea una nuova conversazione
     public function createConversation(Request $request)
     {
         $validated = $request->validate([
+            'title' => 'required|string|max:255',
             'active' => 'nullable|boolean',
         ]);
 
         try {
             $conversation = Conversation::create([
+                'title' => $validated['title'],
                 'active' => $validated['active'] ?? true, // Usa true se non viene fornito
             ]);
 
