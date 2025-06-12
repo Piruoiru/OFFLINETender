@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'llm' => [
+        'url' => env('LLM_URL'),
+    ],
+
 ];

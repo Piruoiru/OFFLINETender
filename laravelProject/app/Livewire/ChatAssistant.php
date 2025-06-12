@@ -7,230 +7,105 @@ use Illuminate\Support\Facades\Http;
 
 class ChatAssistant extends Component
 {
-    public $conversations = [];
-    public $activeConversation;
-    public $messages = [];
-    public $newMessage = '';
-    public $showModal = false;
-    public $newConversationTitle = '';
-    public $newConversationActive = true;
+    /* ---------- Stato ---------- */
+    public array  $conversations      = [];
+    public ?int   $activeConversation = null;
+    public array  $messages           = [];
+    public string $newMessage         = '';
+    public bool   $isSending          = false;
 
-    public function mount()
+    /* ---------- MODALE ---------- */
+    public ?int   $newConversationActive = null;
+    /** Flag che decide se mostrare il modal */
+    public bool   $showModal          = false;
+    /** Campo “Titolo” dentro al modal  */
+    public string $newConversationTitle = '';
+
+    /* ---------- Metodi per il modal ---------- */
+    public function openModal(): void   { $this->showModal = true;  }
+    public function closeModal(): void  { $this->showModal = false; }
+
+    public function createConversation(): void
     {
-        $response = \Http::get(url('/api/conversations'));
-        if ($response->successful()) {
-            $this->conversations = $response->json();
-        } else {
-            $this->conversations = [];
-        }
-        // $this->conversations = [
-        //     ['id' => 1, 'title' => 'Conversazione 1'],
-        //     ['id' => 2, 'title' => 'Conversazione 2'],
-        // ];
-        //fare chiamata api che me le pesca da db laravel
-
-        // $this->activeConversation = 1;
-        // //metto come prima conversazione quella con id ultimo
-
-        // $this->messages = [
-        //     ['sender' => 'assistant', 'message' => 'Ciao! Come posso aiutarti?']
-        // ];
-        // Imposta la prima conversazione attiva (la più recente)
-        // if (!empty($this->conversations)) {
-        //     $this->activeConversation = collect($this->conversations)->last()['id'];
-        //     $this->loadMessages($this->activeConversation);
-        // }
-        if (!empty($this->conversations)) {
-            $this->activeConversation = collect($this->conversations)->last()['id'];
-            $this->selectConversation($this->activeConversation);
-        }
-        // Carica i messaggi della conversazione attiva
-        // $this->loadMessages($this->activeConversation);
-    }
-
-    public function selectConversation($id)
-    {
-        $this->activeConversation = $id;
-
-        // Chiamata API per ottenere i messaggi
-        $response = \Http::get(url("/api/conversations/{$id}/messages"));
-
-        if ($response->successful()) {
-            $this->messages = collect($response->json())->map(function ($msg) {
-                return [
-                    'sender' => $msg['sender'],
-                    'message' => $msg['content'] ?? $msg['message'], // fallback per compatibilità
-                ];
-            })->toArray();
-        } else {
-            // Messaggi di errore fallback
-            $this->messages = [
-                ['sender' => 'system', 'message' => 'Impossibile caricare i messaggi.']
-            ];
-        }
-    }
-
-    // public function sendMessage()
-    // {
-    //     if (trim($this->newMessage) === '' || !$this->activeConversation) return;
-
-    //     // Mostra subito il messaggio dell’utente
-    //     $this->messages[] = [
-    //         'sender' => 'user',
-    //         'message' => $this->newMessage
-    //     ];
-
-    //     $userMessage = $this->newMessage;
-    //     $this->newMessage = '';
-
-    //     // Mostra messaggio "in elaborazione"
-    //     $this->messages[] = [
-    //         'sender' => 'assistant',
-    //         'message' => 'Sto pensando...'
-    //     ];
-
-    //     try {
-    //         \Http::post(url("/api/conversations/{$this->activeConversation}/messages"), [
-    //             'content' => $userMessage
-    //         ]);
-
-    //         $response = \Http::timeout(300)->post(url('/api/chat'), [
-    //             'message' => $userMessage,
-    //             'conversation_id' => $this->activeConversation,
-    //         ]);
-
-    //         if ($response->successful()) {
-    //             $reply = $response->json()['reply'] ?? '[Nessuna risposta dal modello]';
-
-    //             // Rimuovi "Sto pensando..." e metti risposta vera
-    //             array_pop($this->messages); // rimuove ultimo (placeholder)
-    //             $this->messages[] = [
-    //                 'sender' => 'assistant',
-    //                 'message' => $reply
-    //             ];
-    //         } else {
-    //             array_pop($this->messages);
-    //             $this->messages[] = [
-    //                 'sender' => 'system',
-    //                 'message' => 'Errore durante la comunicazione con il modello.'
-    //             ];
-    //         }
-    //     } catch (\Exception $e) {
-    //         array_pop($this->messages);
-    //         $this->messages[] = [
-    //             'sender' => 'system',
-    //             'message' => 'Errore: ' . $e->getMessage()
-    //         ];
-    //     }
-    // }
-
-    public function sendMessage()
-    {
-        if (trim($this->newMessage) === '' || !$this->activeConversation) return;
-
-        $userMessage = $this->newMessage;
-        $this->newMessage = '';
-
-        // Mostra subito il messaggio dell’utente
-        $this->messages[] = [
-            'sender' => 'user',
-            'message' => $userMessage
-        ];
-
-        // Mostra messaggio "in elaborazione"
-        $this->messages[] = [
-            'sender' => 'assistant',
-            'message' => 'Sto pensando...'
-        ];
-
-        // Salva il messaggio dell'utente in background (non serve risposta)
-        \Http::post(url("/api/conversations/{$this->activeConversation}/messages"), [
-            'content' => $userMessage
+        // valida, salva, ecc. – esempio minimale:
+        $r = Http::post(url('/api/conversations'), [
+            'title' => $this->newConversationTitle,
         ]);
 
-        try {
-            $response = \Http::timeout(300)->post(url('/api/chat'), [
-                'message' => $userMessage,
-                'conversation_id' => $this->activeConversation,
-            ]);
-
-            // Rimuovi "Sto pensando..." e metti risposta vera
-            array_pop($this->messages);
-
-            if ($response->successful()) {
-                $reply = $response->json()['reply'] ?? '[Nessuna risposta dal modello]';
-
-                $this->messages[] = [
-                    'sender' => 'assistant',
-                    'message' => $reply
-                ];
-            } else {
-                $this->messages[] = [
-                    'sender' => 'system',
-                    'message' => 'Errore durante la comunicazione con il modello.'
-                ];
-            }
-        } catch (\Exception $e) {
-            array_pop($this->messages);
-            $this->messages[] = [
-                'sender' => 'system',
-                'message' => 'Errore: ' . $e->getMessage()
-            ];
+        if ($r->successful()) {
+            // aggiorna la lista (o chiama un refresh generale)
+            $this->conversations[] = $r->json();
+            // pulizia UI
+            $this->newConversationTitle = '';
+            $this->showModal = false;
         }
     }
 
-
-    public function render()
+    /* ---------- Mount ---------- */
+    public function mount(): void
     {
-        return view('livewire.chat-assistant');
+        $r = Http::get(url('/api/conversations'));
+        if ($r->successful()) {
+            $this->conversations      = $r->json();
+            $this->activeConversation = $this->conversations[0]['id'] ?? null;
+            $this->refreshMessages();
+        }
     }
 
-    public function refreshMessages()
+    /* ---------- Selezione chat ---------- */
+    public function selectConversation(int $id): void
+    {
+        $this->activeConversation = $id;
+        $this->refreshMessages();
+    }
+
+    /* ---------- Ricarica ---------- */
+    public function refreshMessages(): void
     {
         if (!$this->activeConversation) return;
 
-        $response = \Http::get(url("/api/conversations/{$this->activeConversation}/messages"));
+        $r = Http::get(url("/api/conversations/{$this->activeConversation}/messages"));
+        if ($r->successful()) $this->messages = $r->json();
+    }
 
-        if ($response->successful()) {
-            $this->messages = collect($response->json())->map(function ($msg) {
-                return [
-                    'sender' => $msg['sender'],
-                    'message' => $msg['content'] ?? $msg['message'],
-                ];
-            })->toArray();
+    /* ---------- Invio ---------- */
+    public function sendMessage(): void
+    {
+        // ⛔ evita invii multipli finché la richiesta precedente non è finita
+        if ($this->isSending) {
+            return;
         }
-    }
+        $this->isSending = true;
 
-    public function openModal()
-    {
-        $this->showModal = true;
-    }
-
-    public function closeModal()
-    {
-        $this->reset(['showModal', 'newConversationTitle', 'newConversationActive']);
-    }
-
-    public function createConversation()
-    {
-        $response = Http::post(url('/api/create-conversation'), [
-            'title' => $this->newConversationTitle,
-            'active' => (bool) $this->newConversationActive,
-        ]);
-
-        if ($response->successful()) {
-            $newConversation = $response->json()['conversation'];
-
-            // Aggiungi la nuova conversazione alla lista
-            $this->conversations[] = $newConversation;
-
-            // Seleziona subito la nuova conversazione
-            $this->selectConversation($newConversation['id']);
-
-            $this->closeModal();
-        }else {
-            // Gestione errore
-            session()->flash('error', 'Errore nella creazione della conversazione.');
+        // ⛔ messaggio vuoto o conversazione non selezionata
+        $content = trim($this->newMessage);
+        if ($content === '' || ! $this->activeConversation) {
+            $this->isSending = false;
+            return;
         }
+
+        //✅ POST al backend
+        $resp = Http::post(
+            url("/api/conversations/{$this->activeConversation}/messages"),
+            ['content' => $content, 'sender' => 'user']
+        );
+
+        if ($resp->successful() && $payload = $resp->json()) {
+            // ✅ deduplica: non aggiungere se l’id è già presente
+            $already = collect($this->messages)->contains(fn ($m) => $m['id'] === $payload['id']);
+
+            if (! $already) {
+                $this->messages[] = $payload;   // un solo record: quello dell’utente
+            }
+
+            $this->newMessage = '';             // svuota l’input
+        }
+
+        $this->isSending = false;               // sblocca l’invio successivo
+        /* Nessun refresh immediato.
+        Il wire:poll (o l’SSE) mostrerà la risposta al giro successivo */
+        $this->refreshMessages();   
     }
+
+    public function render() { return view('livewire.chat-assistant'); }
 }

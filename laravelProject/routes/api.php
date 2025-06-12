@@ -1,15 +1,25 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\{
+    ConversationController,
+    MessageController,
+    MessageStreamController
+};
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::prefix('conversations')->group(function () {
+    Route::get('/',  [ConversationController::class, 'index']);
+    Route::post('/', [ConversationController::class, 'storeConversation']);
 
-Route::get('/conversations', [ConversationController::class, 'conversations']);
-Route::get('/conversations/{id}/messages', [ConversationController::class, 'messages']);
-Route::post('/conversations/{id}/messages', [ConversationController::class, 'storeMessage']);
-Route::post('/chat', [ConversationController::class, 'chat']);
-Route::post('/create-conversation', [ConversationController::class, 'createConversation']);
+    // ——— MESSAGGI (mettili prima) ———
+    Route::get('{conversation}/messages',  [MessageController::class, 'index']);
+    Route::post('{conversation}/messages', [MessageController::class, 'storeMessage']);
+
+    Route::get('{conversation}/stream', MessageStreamController::class);
+
+    // —— SHOW va in coda, è la meno specifica ——
+    Route::get('{conversation}', [ConversationController::class, 'show']);
+});
+
+
+// DA TESTARE MODIFICARE LA ROBA PER CREARE CONVERSAZIONE DARE A CHAT IL MIO FILE CON LA TABELLA DELLA CONVERSAZIONE E FARGLIELA RICRRARE L'API 

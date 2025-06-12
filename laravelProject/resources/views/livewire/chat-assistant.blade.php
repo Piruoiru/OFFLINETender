@@ -2,41 +2,41 @@
     <div class="flex h-full w-full" style="height: 75vh;">
         <!-- Sidebar Conversazioni -->
         <div class="bg-gray-100 dark:bg-gray-800 p-4 border-r dark:border-gray-700 flex flex-col overflow-y-auto" style="width: 17rem;">
-            <div class="flex items-center justify-between ">
-                <h2 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">Conversazioni</h2>
-                <button type="button" wire:click="openModal" class="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">+</button>                
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white">Conversazioni</h2>
+                <button type="button" wire:click="openModal" class="border dark:border-gray-600 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 w-8 h-8">+</button>
             </div>
             @if ($showModal)
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-<div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md shadow-xl">
-    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Nuova Conversazione</h3>
-    
-    <div class="space-y-4">
-        <div>
-            <label class="block text-sm text-gray-700 dark:text-gray-300">Titolo</label>
-            <input type="text" wire:model.defer="newConversationTitle"
-                class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md shadow-xl">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Nuova Conversazione</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-700 dark:text-gray-300">Titolo</label>
+                            <input type="text" wire:model.defer="newConversationTitle"
+                                class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
 
-        <div>
-            <label class="block text-sm text-gray-700 dark:text-gray-300">Stato</label>
-            <select wire:model.defer="newConversationActive"
-                    class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none">
-                <option value="1">Attiva</option>
-                <option value="0">Non Attiva</option>
-            </select>
-        </div>
+                        <div>
+                            <label class="block text-sm text-gray-700 dark:text-gray-300">Stato</label>
+                            <select wire:model.defer="newConversationActive"
+                                    class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none">
+                                <option value="1">Attiva</option>
+                                <option value="0">Non Attiva</option>
+                            </select>
+                        </div>
 
-        <div class="flex justify-end gap-2">
-            <button wire:click="closeModal" type="button"
-                class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-black dark:text-white hover:bg-gray-400 dark:hover:bg-gray-700">Annulla</button>
-            <button wire:click="createConversation" type="button"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Crea</button>
-        </div>
-    </div>
-</div>
-</div>
-@endif
+                        <div class="flex justify-end gap-2">
+                            <button wire:click="closeModal" type="button"
+                                class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-black dark:text-white hover:bg-gray-400 dark:hover:bg-gray-700">Annulla</button>
+                            <button wire:click="createConversation" type="button"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Crea</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         
             <div class="space-y-2">
                 @foreach ($conversations as $conv)
@@ -54,14 +54,15 @@
             <!-- Area Chat -->
             <div class="flex flex-col flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
                 <!-- Messaggi -->
-                <div wire:poll.5s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- <div wire:poll.1s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4"> -->
                     @foreach ($messages as $message)
                         <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
                             <div class="max-w-lg px-4 py-2 rounded-xl shadow
                                 {{ $message['sender'] === 'user'
                                     ? 'bg-blue-500 text-black'
                                     : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white' }}">
-                                {{ $message['message'] }}
+                                {{ $message['content'] }}
                             </div>
                         </div>
                     @endforeach

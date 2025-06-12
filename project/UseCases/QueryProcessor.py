@@ -19,7 +19,7 @@ class QueryProcessor:
 
     def run(self, user_input: str):
         # 🔹 Salva il messaggio dell'utente nel DB
-        self.chat_history_service.save_message(self.conversation_id, "user", user_input)
+        # self.chat_history_service.save_message(self.conversation_id, "user", user_input)
 
         # 🔸 Step 1: Estrai contesto rilevante
         try:
@@ -40,6 +40,7 @@ class QueryProcessor:
 
         prompt = (  
             f"Contesto:\n{context_text}\n\n"
+            f"User:\n{user_input}\n\n"
             # PER DECIDERE LO STORICO DA USARE
             # f"{history_text}\n"
             f"Assistant:"
@@ -50,7 +51,7 @@ class QueryProcessor:
             response = self.llm_service.get_LLM_response(prompt)
 
             # Salva la risposta del modello
-            self.chat_history_service.save_message(self.conversation_id, "assistant", response)
+            # self.chat_history_service.save_message(self.conversation_id, "assistant", response)
 
             return response
         except Exception as e:
