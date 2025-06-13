@@ -84,28 +84,36 @@ class ChatAssistant extends Component
             return;
         }
 
-        //✅ POST al backend
-        $resp = Http::post(
+        // ← MODIFICA: push immediato del messaggio dell’utente
+        $this->messages[] = [
+            'id'      => uniqid('tmp_user_', true),
+            'content' => $content,
+            'sender'  => 'user',
+        ];
+
+        // ← MODIFICA: push del placeholder “Sto pensando…”
+        $this->messages[] = [
+            'id'      => uniqid('tmp_thinking_', true),
+            'content' => 'Sto pensando...',
+            'sender'  => 'assistant',
+        ];
+
+        // svuoto subito l’input
+        $this->newMessage = '';
+
+        // ✅ POST al backend
+        Http::post(
             url("/api/conversations/{$this->activeConversation}/messages"),
             ['content' => $content, 'sender' => 'user']
         );
 
-        if ($resp->successful() && $payload = $resp->json()) {
-            // ✅ deduplica: non aggiungere se l’id è già presente
-            $already = collect($this->messages)->contains(fn ($m) => $m['id'] === $payload['id']);
+        $this->isSending = false; // sblocca l’invio successivo
 
-            if (! $already) {
-                $this->messages[] = $payload;   // un solo record: quello dell’utente
-            }
-
-            $this->newMessage = '';             // svuota l’input
-        }
-
-        $this->isSending = false;               // sblocca l’invio successivo
-        /* Nessun refresh immediato.
-        Il wire:poll (o l’SSE) mostrerà la risposta al giro successivo */
-        $this->refreshMessages();   
+        // ← RIMOSSA: tolta la chiamata a refreshMessages() qui, 
+        // perché ora il wire:poll gestisce il fetch periodico
     }
+
+
 
     public function render() { return view('livewire.chat-assistant'); }
 }

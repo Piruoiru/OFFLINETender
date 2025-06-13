@@ -54,8 +54,8 @@
             <!-- Area Chat -->
             <div class="flex flex-col flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
                 <!-- Messaggi -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-4">
-                <!-- <div wire:poll.1s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4"> -->
+                <!-- <div class="flex-1 overflow-y-auto p-6 space-y-4"> -->
+                <div wire:poll.1s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
                     @foreach ($messages as $message)
                         <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
                             <div class="max-w-lg px-4 py-2 rounded-xl shadow
