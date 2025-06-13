@@ -17,9 +17,9 @@ class ConversationApi
         ]);
     }
 
-    public function refresh(int $conversationId)
+    public function mount()
     {
-        return Http::get(url("/api/conversations/{$conversationId}/messages"));
+        return Http::get(url('/api/conversations'));;
     }
 
     public function sendchat(int $conversationId, string $content, string $sender)
@@ -31,5 +31,13 @@ class ConversationApi
                 'sender'  => $sender,
             ]
         );
+    }
+
+    public function refresh(int $conversationId)
+    {   
+        return Http::get(
+            url("/api/conversations/{$conversationId}/messages")
+        );
+
     }
 }

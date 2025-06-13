@@ -40,10 +40,19 @@ class ChatAssistant extends Component
     /* ---------- Mount ---------- */
     public function mount(): void
     {
-        $r = Http::get(url('/api/conversations'));
+        $conversationApi = app(ConversationApi::class);
+
+        $r = $conversationApi->mount();
         if ($r->successful()) {
-            $this->conversations      = $r->json();
-            $this->activeConversation = $this->conversations[0]['id'] ?? null;
+            $this->conversations = $r->json();
+
+            // indice dell’ultimo elemento, oppure null se l’array è vuoto
+            $lastIndex = array_key_last($this->conversations);
+
+            $this->activeConversation = $lastIndex !== null
+                ? $this->conversations[$lastIndex]['id']
+                : null;
+
             $this->refreshMessages();
         }
     }
@@ -58,10 +67,17 @@ class ChatAssistant extends Component
     /* ---------- Ricarica ---------- */
     public function refreshMessages(): void
     {
-        if (!$this->activeConversation) return;
+        $conversationApi = app(ConversationApi::class);
 
-        $r = Http::get(url("/api/conversations/{$this->activeConversation}/messages"));
-        if ($r->successful()) $this->messages = $r->json();
+        if (! $this->activeConversation) {
+            return;
+        }
+
+        $r = $conversationApi->refresh($this->activeConversation);
+
+        if ($r->successful()) {
+            $this->messages = $r->json();
+        }
     }
 
     /* ---------- Invio ---------- */
