@@ -21,4 +21,15 @@ class ConversationApi
     {
         return Http::get(url("/api/conversations/{$conversationId}/messages"));
     }
+
+    public function sendchat(int $conversationId, string $content, string $sender)
+     {
+        return Http::post(
+            url("/api/conversations/{$conversationId}/messages"),
+            [
+                'content' => $content,
+                'sender'  => $sender,
+            ]
+        );
+    }
 }

@@ -66,7 +66,9 @@ class ChatAssistant extends Component
 
     /* ---------- Invio ---------- */
     public function sendMessage(): void
-    {
+    {   
+        $conversationApi = app(ConversationApi::class);
+
         // ⛔ evita invii multipli finché la richiesta precedente non è finita
         if ($this->isSending) {
             return;
@@ -97,11 +99,8 @@ class ChatAssistant extends Component
         // svuoto subito l’input
         $this->newMessage = '';
 
-        // ✅ POST al backend
-        Http::post(
-            url("/api/conversations/{$this->activeConversation}/messages"),
-            ['content' => $content, 'sender' => 'user']
-        );
+        
+        $conversationApi->sendChat($this->activeConversation, $content, 'user');
 
         $this->isSending = false; // sblocca l’invio successivo
 
