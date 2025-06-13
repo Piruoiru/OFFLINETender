@@ -16,9 +16,7 @@ class ChatAssistant extends Component
 
     /* ---------- MODALE ---------- */
     public ?int   $newConversationActive = null;
-    /** Flag che decide se mostrare il modal */
     public bool   $showModal          = false;
-    /** Campo “Titolo” dentro al modal  */
     public string $newConversationTitle = '';
 
     /* ---------- Metodi per il modal ---------- */
