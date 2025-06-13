@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
+use App\Services\ConversationApi; // Assicurati di avere questo servizio
 
 class ChatAssistant extends Component
 {
@@ -24,18 +25,15 @@ class ChatAssistant extends Component
     public function closeModal(): void  { $this->showModal = false; }
 
     public function createConversation(): void
-    {
+    {   
+        $conversationApi = app(ConversationApi::class);
         // valida, salva, ecc. – esempio minimale:
-        $r = Http::post(url('/api/conversations'), [
-            'title' => $this->newConversationTitle,
-        ]);
+        $response = $conversationApi->create($this->newConversationTitle);
 
-        if ($r->successful()) {
-            // aggiorna la lista (o chiama un refresh generale)
-            $this->conversations[] = $r->json();
-            // pulizia UI
+        if ($response->successful()) {
+            $this->conversations[]      = $response->json();
             $this->newConversationTitle = '';
-            $this->showModal = false;
+            $this->showModal            = false;
         }
     }
 
