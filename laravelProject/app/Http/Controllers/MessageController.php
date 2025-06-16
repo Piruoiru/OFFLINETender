@@ -12,7 +12,7 @@ class MessageController extends Controller
     public function index(Conversation $conversation)
     {
         // Ordinati dal più vecchio al più nuovo
-        return $conversation->messages()->oldest()->get();
+        return $conversation->messages()->oldest()->paginate(20);
     }
 
     /** POST /api/conversations/{conversation}/messages */

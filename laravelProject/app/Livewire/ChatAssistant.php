@@ -5,13 +5,19 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use App\Services\ConversationApi; // Assicurati di avere questo servizio
+use App\Models\Message;
+use Livewire\WithPagination;
 
 class ChatAssistant extends Component
 {
+    use WithPagination;
+    
+    public int $perPage = 20;
+
     /* ---------- Stato ---------- */
     public array  $conversations      = [];
     public ?int   $activeConversation = null;
-    public array  $messages           = [];
+    // public array  $messages           = [];
     public string $newMessage         = '';
     public bool   $isSending          = false;
 
@@ -62,6 +68,8 @@ class ChatAssistant extends Component
     {
         $this->activeConversation = $id;
         $this->refreshMessages();
+            $this->perPage = 20;     // torna al valore iniziale
+        $this->resetPage();
     }
 
     /* ---------- Ricarica ---------- */
@@ -76,7 +84,7 @@ class ChatAssistant extends Component
         $r = $conversationApi->refresh($this->activeConversation);
 
         if ($r->successful()) {
-            $this->messages = $r->json();
+            $this->messages = $r->json('data') ?? [];
         }
     }
 
@@ -124,7 +132,33 @@ class ChatAssistant extends Component
         // perché ora il wire:poll gestisce il fetch periodico
     }
 
+    public function getMessagesProperty()
+    {
+        return Message::where('conversation_id', $this->activeConversation)
+                    ->latest()              // messaggi più recenti
+                    ->take($this->perPage)  // limite dinamico
+                    ->get()
+                    ->reverse();            // dal più vecchio al più nuovo
+    }
 
+    public function getHasMoreProperty()
+    {
+        // vero se in DB ci sono ancora messaggi oltre quelli già mostrati
+        return Message::where('conversation_id', $this->activeConversation)
+                    ->count() > $this->perPage;
+    }
 
-    public function render() { return view('livewire.chat-assistant'); }
+    public function render()
+    {
+        return view('livewire.chat-assistant', [
+            'messages' => $this->messages,              // quelli push-ati in tempo reale
+            'loaded'   => $this->messages,              // accessor appena creato
+            'hasMore'  => $this->hasMore,               // accessor per il bottone
+        ]);
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 20;   // la prossima render mostrerà 20 record in più
+    }
 }
