@@ -56,6 +56,14 @@
                 <!-- Messaggi -->
                 <!-- <div class="flex-1 overflow-y-auto p-6 space-y-4"> -->
                 <div wire:poll.100s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    @if ($hasMore)
+                        <div class="text-center">
+                            <button wire:click="loadMore"
+                                    class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                                Carica altri
+                            </button>
+                        </div>
+                    @endif
                     @foreach ($messages as $message)
                         <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
                             <div class="max-w-lg px-4 py-2 rounded-xl shadow
@@ -66,14 +74,6 @@
                             </div>
                         </div>
                     @endforeach
-                    @if ($hasMore)
-                        <div class="text-center">
-                            <button wire:click="loadMore"
-                                    class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                                Carica altri
-                            </button>
-                        </div>
-                    @endif
                 </div>
     
                 <!-- Input -->
