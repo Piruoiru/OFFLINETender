@@ -40,4 +40,11 @@ class ConversationApi
         );
 
     }
+
+    public function analyze(){
+        return Http::baseUrl(config('services.llm.url'))
+                ->timeout(360)
+                ->post('/analyze')
+                ->throw();
+    }
 }

@@ -6,6 +6,9 @@ use App\Http\Controllers\{
     MessageController,
     MessageStreamController
 };
+use App\Services\ConversationApi;
+
+Route::post('analyze', [ConversationApi::class, 'analyze']);
 
 Route::prefix('conversations')->group(function () {
     Route::get('/',  [ConversationController::class, 'index']);
