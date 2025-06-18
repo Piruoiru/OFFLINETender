@@ -55,7 +55,7 @@
             <div class="flex flex-col flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
                 <!-- Messaggi -->
                 <!-- <div class="flex-1 overflow-y-auto p-6 space-y-4"> -->
-                <div wire:poll.100s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div wire:poll.1s="refreshMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
                     @if ($hasMore)
                         <div class="text-center">
                             <button wire:click="loadMore"

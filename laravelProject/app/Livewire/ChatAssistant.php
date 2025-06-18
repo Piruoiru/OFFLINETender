@@ -3,49 +3,37 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Illuminate\Support\Collection;
-use App\Services\ConversationApi;
+use Illuminate\Support\Facades\Http;
+use App\Services\ConversationApi; // Assicurati di avere questo servizio
 use App\Models\Message;
+use Livewire\WithPagination;
 
 class ChatAssistant extends Component
 {
-    /* ------- Config ------- */
-    public int $chunkSize = 20;   // blocco di messaggi da caricare/aggiungere
+    use WithPagination;
+    
+    public int $perPage = 20;
 
-    /* ------- Stato ------- */
-    public Collection $history;   // messaggi già mostrati (vecchio → nuovo)
-    public array      $liveStack   = [];   // placeholder (user / “Sto pensando…”)  
-    public array      $conversations = [];
-    public ?int       $activeConversation = null;
-    public string     $newMessage  = '';
-    public bool       $isSending   = false;
+    /* ---------- Stato ---------- */
+    public array  $conversations      = [];
+    public ?int   $activeConversation = null;
+    // public array  $messages           = [];
+    public string $newMessage         = '';
+    public bool   $isSending          = false;
 
-    /* ------- Modale ------- */
-    public bool   $showModal            = false;
+    /* ---------- MODALE ---------- */
+    public ?int   $newConversationActive = null;
+    public bool   $showModal          = false;
     public string $newConversationTitle = '';
 
-    /* ======================= Ciclo di vita ======================= */
-    public function mount(): void
-    {
-        $this->history = collect(); // inizializza la collection vuota
-
-        $conversationApi = app(ConversationApi::class);
-        $r = $conversationApi->mount();
-        if ($r->successful()) {
-            $this->conversations = $r->json();
-            $lastIndex = array_key_last($this->conversations);
-            $this->activeConversation = $lastIndex !== null ? $this->conversations[$lastIndex]['id'] : null;
-            $this->loadLatest();      // carica i 20 più recenti se c’è una chat attiva
-        }
-    }
-
-    /* ======================= Modale “Nuova chat” ======================= */
+    /* ---------- Metodi per il modal ---------- */
     public function openModal(): void   { $this->showModal = true;  }
     public function closeModal(): void  { $this->showModal = false; }
 
     public function createConversation(): void
-    {
+    {   
         $conversationApi = app(ConversationApi::class);
+        // valida, salva, ecc. – esempio minimale:
         $response = $conversationApi->create($this->newConversationTitle);
 
         if ($response->successful()) {
@@ -55,110 +43,122 @@ class ChatAssistant extends Component
         }
     }
 
-    /* ======================= Cambio chat ======================= */
-    public function selectConversation(int $id): void
+    /* ---------- Mount ---------- */
+    public function mount(): void
     {
-        $this->activeConversation = $id;
-        $this->history   = collect(); // svuota lo storico mostrato
-        $this->liveStack = [];        // svuota i placeholder
-        $this->loadLatest();          // ricarica gli ultimi 20
-    }
+        $conversationApi = app(ConversationApi::class);
 
-    /* ======================= Caricamento iniziale ======================= */
-    private function loadLatest(): void
-    {
-        if (! $this->activeConversation) return;
+        $r = $conversationApi->mount();
+        if ($r->successful()) {
+            $this->conversations = $r->json();
 
-        $this->history = Message::where('conversation_id', $this->activeConversation)
-                                ->latest()          // più recenti in alto
-                                ->take($this->chunkSize)
-                                ->get()
-                                ->reverse();        // ordina internamente da vecchio a nuovo
-    }
+            // indice dell’ultimo elemento, oppure null se l’array è vuoto
+            $lastIndex = array_key_last($this->conversations);
 
-    /* ======================= Carica altri (più vecchi) ======================= */
-    public function loadMore(): void
-    {
-        if (! $this->activeConversation) return;
+            $this->activeConversation = $lastIndex !== null
+                ? $this->conversations[$lastIndex]['id']
+                : null;
 
-        $already = $this->history->count();
-
-        $older = Message::where('conversation_id', $this->activeConversation)
-                        ->latest()
-                        ->skip($already)            // salta quelli già visti
-                        ->take($this->chunkSize)
-                        ->get()
-                        ->reverse();
-
-        // prepend: i più vecchi vanno in cima
-        $this->history = $older->merge($this->history);
-    }
-
-    /* ======================= Poll: nuovi messaggi dal server ======================= */
-    public function refreshMessages(): void
-    {
-        if (! $this->activeConversation || $this->history->isEmpty()) return;
-
-        $lastId = $this->history->last()->id;    // id del messaggio più recente già mostrato
-
-        $newer = Message::where('conversation_id', $this->activeConversation)
-                        ->where('id', '>', $lastId)
-                        ->orderBy('created_at')  // ordine naturale
-                        ->get();
-
-        if ($newer->isNotEmpty()) {
-            // append: nuovi in fondo
-            $this->history = $this->history->merge($newer);
+            $this->refreshMessages();
         }
     }
 
-    /* ======================= Invio messaggio ======================= */
-    public function sendMessage(): void
+    /* ---------- Selezione chat ---------- */
+    public function selectConversation(int $id): void
     {
-        if ($this->isSending) return;            // blocca doppio invio
+        $this->activeConversation = $id;
+        $this->refreshMessages();
+            $this->perPage = 20;     // torna al valore iniziale
+        $this->resetPage();
+    }
 
-        $content = trim($this->newMessage);
-        if ($content === '' || ! $this->activeConversation) return;
+    /* ---------- Ricarica ---------- */
+    public function refreshMessages(): void
+    {
+        $conversationApi = app(ConversationApi::class);
 
+        if (! $this->activeConversation) {
+            return;
+        }
+
+        $r = $conversationApi->refresh($this->activeConversation);
+
+        if ($r->successful()) {
+            $this->messages = $r->json('data') ?? [];
+        }
+    }
+
+    /* ---------- Invio ---------- */
+    public function sendMessage(): void
+    {   
+        $conversationApi = app(ConversationApi::class);
+
+        // ⛔ evita invii multipli finché la richiesta precedente non è finita
+        if ($this->isSending) {
+            return;
+        }
         $this->isSending = true;
 
-        // 1. Placeholder immediati nell’interfaccia
-        $this->liveStack[] = [
+        // ⛔ messaggio vuoto o conversazione non selezionata
+        $content = trim($this->newMessage);
+        if ($content === '' || ! $this->activeConversation) {
+            $this->isSending = false;
+            return;
+        }
+
+        // ← MODIFICA: push immediato del messaggio dell’utente
+        $this->messages[] = [
             'id'      => uniqid('tmp_user_', true),
             'content' => $content,
             'sender'  => 'user',
         ];
-        $this->liveStack[] = [
+
+        // ← MODIFICA: push del placeholder “Sto pensando…”
+        $this->messages[] = [
             'id'      => uniqid('tmp_thinking_', true),
             'content' => 'Sto pensando...',
             'sender'  => 'assistant',
         ];
 
-        // 2. Svuota input
+        // svuoto subito l’input
         $this->newMessage = '';
 
-        // 3. Chiamata API
-        $conversationApi = app(ConversationApi::class);
+        
         $conversationApi->sendChat($this->activeConversation, $content, 'user');
 
-        $this->isSending = false;
+        $this->isSending = false; // sblocca l’invio successivo
+
+        // ← RIMOSSA: tolta la chiamata a refreshMessages() qui, 
+        // perché ora il wire:poll gestisce il fetch periodico
     }
 
-    /* ======================= Utility: ci sono altri vecchi? ======================= */
-    private function hasMore(): bool
+    public function getMessagesProperty()
     {
-        if (! $this->activeConversation) return false;
-
-        $total = Message::where('conversation_id', $this->activeConversation)->count();
-        return $this->history->count() < $total;
+        return Message::where('conversation_id', $this->activeConversation)
+                    ->latest()              // messaggi più recenti
+                    ->take($this->perPage)  // limite dinamico
+                    ->get()
+                    ->reverse();            // dal più vecchio al più nuovo
     }
 
-    /* ======================= Render ======================= */
+    public function getHasMoreProperty()
+    {
+        // vero se in DB ci sono ancora messaggi oltre quelli già mostrati
+        return Message::where('conversation_id', $this->activeConversation)
+                    ->count() > $this->perPage;
+    }
+
     public function render()
     {
         return view('livewire.chat-assistant', [
-            'messages' => $this->history->merge($this->liveStack), // storico + placeholder
-            'hasMore'  => $this->hasMore(),
+            'messages' => $this->messages,              // quelli push-ati in tempo reale
+            'loaded'   => $this->messages,              // accessor appena creato
+            'hasMore'  => $this->hasMore,               // accessor per il bottone
         ]);
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 20;   // la prossima render mostrerà 20 record in più
     }
 }
