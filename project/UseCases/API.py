@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from QueryProcessor import QueryProcessor
 import traceback
+import threading
+import Main
 
 app = Flask(__name__)
 
@@ -26,6 +28,27 @@ def chat():
             'response': result,
             'conversation_id': qp.conversation_id
         })
+
+    except Exception as e:
+        return jsonify({
+            'error': 'Errore lato server',
+            'exception': str(e),
+            'trace': traceback.format_exc()
+        }), 500
+    
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    """Avvia l'analisi completa definita in Main.run() in background.
+
+    Restituisce 202 Accepted immediatamente in modo che l'API rimanga reattiva.
+    """
+    try:
+        # Lancia Main.run() in un thread separato per non bloccare la richiesta
+        thread = threading.Thread(target=Main.run, daemon=True, name="Analyzer")
+        thread.start()
+
+        # 202 Accepted: il processo è stato avviato
+        return jsonify({'status': 'Analisi avviata'}), 202
 
     except Exception as e:
         return jsonify({

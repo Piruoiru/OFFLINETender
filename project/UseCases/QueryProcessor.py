@@ -43,7 +43,7 @@ class QueryProcessor:
             f"User:\n{user_input}\n\n"
             # PER DECIDERE LO STORICO DA USARE
             # f"{history_text}\n"
-            f"Assistant:"
+            f"Assistant: Rispondi in modo pertinente e utile al contesto altrimenti segnalalo, basandoti sul contesto fornito.\n\n"
         )
 
         # 🔸 Step 3: Ottieni risposta dal modello LLM

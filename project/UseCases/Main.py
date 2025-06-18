@@ -22,7 +22,7 @@ import json
 dotenv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/.env"))
 load_dotenv(dotenv_path)
 
-if __name__ == "__main__":
+def run() -> None:
     print("▶ Inizio del processo di scraping...")
     process = CrawlerProcess()
     process.crawl(PDFScraper)
@@ -108,3 +108,4 @@ if __name__ == "__main__":
             print("ℹ️ Risposta già presente, salto analisi.")
 
         print("✅ Aggiorna il numero di risposte LLM nella tabella statistics")
+    
