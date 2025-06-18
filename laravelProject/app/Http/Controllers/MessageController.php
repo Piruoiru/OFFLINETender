@@ -33,7 +33,7 @@ class MessageController extends Controller
         $reply = '[errore: nessuna risposta]';
         try {
             $response = Http::baseUrl(config('services.llm.url'))
-                ->timeout(360)
+                ->timeout(3600)
                 ->post('/chat', [
                     'conversation_id' => $conversation->id,
                     'message'         => $data['content'],

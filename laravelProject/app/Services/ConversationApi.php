@@ -12,19 +12,19 @@ class ConversationApi
      */
     public function create(string $title)
     {
-        return Http::post(url('/api/conversations'), [
+        return Http::timeout(120)->post(url('/api/conversations'), [
             'title' => $title,
         ]);
     }
 
     public function mount()
     {
-        return Http::get(url('/api/conversations'));;
+        return Http::timeout(120)->get(url('/api/conversations'));;
     }
 
     public function sendchat(int $conversationId, string $content, string $sender)
      {
-        return Http::post(
+        return Http::timeout(120)->post(
             url("/api/conversations/{$conversationId}/messages"),
             [
                 'content' => $content,
@@ -35,7 +35,7 @@ class ConversationApi
 
     public function refresh(int $conversationId)
     {   
-        return Http::get(
+        return Http::timeout(120)->get(
             url("/api/conversations/{$conversationId}/messages")
         );
 
@@ -43,7 +43,7 @@ class ConversationApi
 
     public function analyze(){
         return Http::baseUrl(config('services.llm.url'))
-                ->timeout(360)
+                ->timeout(3600)
                 ->post('/analyze')
                 ->throw();
     }
