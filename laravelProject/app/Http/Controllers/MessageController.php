@@ -36,7 +36,7 @@ class MessageController extends Controller
 
         /* 1️⃣ Salva il messaggio dell’utente e lo teniamo in $userMessage */
         $userMessage = $this->messageRepository->store($conversation, [
-            'user_id' => auth()->id(),        // sempre l’utente loggato
+            'user_id' => $request->user_id,        // sempre l’utente loggato
             'content' => $data['content'],
             'sender'  => 'user',
         ]);
@@ -60,7 +60,7 @@ class MessageController extends Controller
 
         /* 3️⃣ Salva la risposta dell’assistente (ma NON la restituiamo) */
         $this->messageRepository->store($conversation, [
-            'user_id' => auth()->id(),
+            'user_id' => $request->user_id,
             'sender'  => 'assistant',
             'content' => $reply,
         ]);

@@ -26,13 +26,14 @@ class ConversationController extends Controller
     /** POST /api/conversations */
     public function storeConversation(Request $request)
     {
+        logger($request->all());
         $data = $request->validate([
             'title'  => 'nullable|string|max:255',
         ]);
 
         $conversation= $this->conversationRepository->store([
             'title'  => $data['title'] ?? 'Nuova conversazione',
-            'user_id' => auth()->id(),
+            'user_id' => $request->user_id,
         ]);
 
         return response()->json($conversation, 201);

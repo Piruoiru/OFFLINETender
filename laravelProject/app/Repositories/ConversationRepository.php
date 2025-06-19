@@ -31,8 +31,8 @@ class ConversationRepository implements ConversationRepositoryInterface
        $new_conversation = new Conversation();
 
        $new_conversation->title = OaRepository::store($conversation, 'title');
-    //    $new_conversation->user_id = (OaRepository::store($conversation, 'user_id')?? auth()->id());
-       $new_conversation->user_id = OaRepository::store($conversation, 'user_id') ?: 1;
+       $new_conversation->user_id = (OaRepository::store($conversation, 'user_id')?? auth()->id());
+    //    $new_conversation->user_id = OaRepository::store($conversation, 'user_id') ?: auth()->id();
 
        $new_conversation->save();
 

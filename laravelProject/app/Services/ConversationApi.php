@@ -14,6 +14,7 @@ class ConversationApi
     {
         return Http::timeout(120)->post(url('/api/conversations'), [
             'title' => $title,
+            'user_id' => auth()->id(),
         ]);
     }
 
@@ -29,6 +30,7 @@ class ConversationApi
             [
                 'content' => $content,
                 'sender'  => $sender,
+                'user_id' => auth()->id(),
             ]
         );
     }

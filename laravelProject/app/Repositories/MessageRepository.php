@@ -14,7 +14,7 @@ class MessageRepository implements MessageRepositoryInterface
 
         // foreign-keys
         $newMessage->conversation_id = $conversation->id;
-        $newMessage->user_id         = OaRepository::store($data, 'user_id') ?: 1;
+        $newMessage->user_id         = (OaRepository::store($data, 'user_id') ?? auth()->id());
 
         // payload veri e propri
         $newMessage->sender  = OaRepository::store($data, 'sender');
