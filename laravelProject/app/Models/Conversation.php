@@ -9,7 +9,7 @@ class Conversation extends Model
 {
     protected $fillable = [
         'title', // o altri campi che hai nella tua tabella
-        'active', // Indica se la conversazione è attiva o meno
+        'user_id', // Indica se la conversazione è attiva o meno
     ];
 
     /**

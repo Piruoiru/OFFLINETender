@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
-use App\Services\ConversationApi; // Assicurati di avere questo servizio
+use App\Services\ConversationApi;
 use App\Models\Message;
 use Livewire\WithPagination;
 
@@ -17,7 +17,7 @@ class ChatAssistant extends Component
     /* ---------- Stato ---------- */
     public array  $conversations      = [];
     public ?int   $activeConversation = null;
-    // public array  $messages           = [];
+    public array  $messages           = [];
     public string $newMessage         = '';
     public bool   $isSending          = false;
 
@@ -31,17 +31,37 @@ class ChatAssistant extends Component
     public function closeModal(): void  { $this->showModal = false; }
 
     public function createConversation(): void
-    {   
-        $conversationApi = app(ConversationApi::class);
-        // valida, salva, ecc. – esempio minimale:
-        $response = $conversationApi->create($this->newConversationTitle);
+{
+    $conversationApi = app(ConversationApi::class);
 
-        if ($response->successful()) {
-            $this->conversations[]      = $response->json();
-            $this->newConversationTitle = '';
-            $this->showModal            = false;
+    // il service può restituire o un Response o direttamente l’array
+    $raw = $conversationApi->create(trim($this->newConversationTitle) ?: null);
+
+    // --- normalizziamo ---
+    if ($raw instanceof \Illuminate\Http\Client\Response) {
+        if (! $raw->successful()) {
+            session()->flash('error', 'Errore nel salvataggio');
+            return;
         }
+        $conv = $raw->json();              // array normalizzato
+    } else {
+        // qui se $raw **è già** l’array
+        $conv = $raw;
     }
+
+    /* --------  aggiornamento stato UI -------- */
+    $this->conversations[]   = $conv;
+    $this->activeConversation = $conv['id'];
+    $this->messages           = [];
+    $this->newConversationTitle = '';
+    $this->showModal            = false;
+    $this->perPage              = 20;
+    $this->resetPage();
+
+    // se vuoi subito i (pochi) messaggi presenti:
+    // $this->refreshMessages();
+}
+
 
     /* ---------- Mount ---------- */
     public function mount(): void
@@ -152,8 +172,8 @@ class ChatAssistant extends Component
     {
         return view('livewire.chat-assistant', [
             'messages' => $this->messages,              // quelli push-ati in tempo reale
-            'loaded'   => $this->messages,              // accessor appena creato
-            'hasMore'  => $this->hasMore,               // accessor per il bottone
+            'loaded'   => $this->getMessagesProperty(),
+            'hasMore'  => $this->getHasMoreProperty(),             // accessor per il bottone
         ]);
     }
 

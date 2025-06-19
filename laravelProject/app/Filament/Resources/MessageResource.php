@@ -38,6 +38,9 @@ class MessageResource extends Resource
                     ->required()
                     ->numeric()
                     ->maxLength(65535),
+                Forms\Components\TextInput::make('user_id')
+                ->required()
+                ->numeric(),
             ]);
     }
 
@@ -49,6 +52,7 @@ class MessageResource extends Resource
                 Tables\Columns\TextColumn::make('conversation_id')->searchable(),
                 Tables\Columns\TextColumn::make('sender')->searchable(),
                 Tables\Columns\TextColumn::make('content')->searchable(),
+                Tables\Columns\TextColumn::make('user_id')->searchable()
             ])
             ->filters([
                 //

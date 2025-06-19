@@ -28,7 +28,7 @@ class ConversationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('active')
+                Forms\Components\TextInput::make('user_id')
                     ->required()
                     ->numeric(),
                 Forms\Components\Textarea::make('title')
@@ -43,7 +43,7 @@ class ConversationResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')->searchable(),
                 Tables\Columns\TextColumn::make('title')->searchable(),
-                BooleanColumn::make('active')
+                Tables\Columns\TextColumn::make('user_id')->searchable()
             ])
             ->filters([
                 //

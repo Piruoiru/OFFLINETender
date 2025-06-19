@@ -18,15 +18,6 @@
                                 class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
 
-                        <div>
-                            <label class="block text-sm text-gray-700 dark:text-gray-300">Stato</label>
-                            <select wire:model.defer="newConversationActive"
-                                    class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none">
-                                <option value="1">Attiva</option>
-                                <option value="0">Non Attiva</option>
-                            </select>
-                        </div>
-
                         <div class="flex justify-end gap-2">
                             <button wire:click="closeModal" type="button"
                                 class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-black dark:text-white hover:bg-gray-400 dark:hover:bg-gray-700">Annulla</button>

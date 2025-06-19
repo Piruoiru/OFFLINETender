@@ -4,9 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use Illuminate\Http\Request;
+use App\Repositories\Contracts\ConversationRepositoryInterface;
 
 class ConversationController extends Controller
 {
+    protected ConversationRepositoryInterface $conversationRepository;
+    
+       public function __construct(
+            ConversationRepositoryInterface $conversationRepository
+       )
+       {   
+           $this->conversationRepository = $conversationRepository;
+       }
+
     /** GET /api/conversations */
     public function index()
     {
@@ -18,12 +28,11 @@ class ConversationController extends Controller
     {
         $data = $request->validate([
             'title'  => 'nullable|string|max:255',
-            'active' => 'boolean',
         ]);
 
-        $conversation = Conversation::create([
-            'title'  => $data['title']  ?? 'Nuova conversazione',
-            'active' => $data['active'] ?? true,
+        $conversation= $this->conversationRepository->store([
+            'title'  => $data['title'] ?? 'Nuova conversazione',
+            'user_id' => auth()->id(),
         ]);
 
         return response()->json($conversation, 201);

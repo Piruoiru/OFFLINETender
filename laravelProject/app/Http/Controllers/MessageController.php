@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Repositories\Contracts\MessageRepositoryInterface;
 
 class MessageController extends Controller
 {
+    protected MessageRepositoryInterface $messageRepository;
+
+    public function __construct(MessageRepositoryInterface $messageRepository)
+    {
+        $this->messageRepository = $messageRepository;
+    }
+
     /** GET /api/conversations/{conversation}/messages */
     public function index(Conversation $conversation)
     {
@@ -27,7 +35,11 @@ class MessageController extends Controller
         ]);
 
         /* 1️⃣ Salva il messaggio dell’utente e lo teniamo in $userMessage */
-        $userMessage = $conversation->messages()->create($data);
+        $userMessage = $this->messageRepository->store($conversation, [
+            'user_id' => auth()->id(),        // sempre l’utente loggato
+            'content' => $data['content'],
+            'sender'  => 'user',
+        ]);
 
         /* 2️⃣ Chiediamo la risposta al modello LLM (sincrono, come prima) */
         $reply = '[errore: nessuna risposta]';
@@ -47,7 +59,8 @@ class MessageController extends Controller
         }
 
         /* 3️⃣ Salva la risposta dell’assistente (ma NON la restituiamo) */
-        $conversation->messages()->create([
+        $this->messageRepository->store($conversation, [
+            'user_id' => auth()->id(),
             'sender'  => 'assistant',
             'content' => $reply,
         ]);

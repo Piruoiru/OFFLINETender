@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->boolean('active');
+            $table->unsignedBigInteger('user_id');            
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
