@@ -155,10 +155,11 @@ class ChatAssistant extends Component
     public function getMessagesProperty()
     {
         return Message::where('conversation_id', $this->activeConversation)
-                    ->latest()              // messaggi più recenti
-                    ->take($this->perPage)  // limite dinamico
-                    ->get()
-                    ->reverse();            // dal più vecchio al più nuovo
+        // ->where('id', '<=', $this->lastSeenId)  // $lastSeenId = id più alto già caricato
+        ->orderByDesc('id')          // ① prendi gli ultimi (id più alti)
+        ->take($this->perPage)       // ② limitali a N = $perPage
+        ->get()
+        ->reverse();                // ③ inverti per mostrarli dal più vecchio al più nuovo
     }
 
     public function getHasMoreProperty()

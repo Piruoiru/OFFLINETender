@@ -55,7 +55,7 @@
                             </button>
                         </div>
                     @endif
-                    @foreach ($messages as $message)
+                    @foreach ($loaded as $message)
                         <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
                             <div class="max-w-lg px-4 py-2 rounded-xl shadow
                                 {{ $message['sender'] === 'user'
