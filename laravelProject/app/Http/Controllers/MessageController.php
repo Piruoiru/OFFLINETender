@@ -64,6 +64,7 @@ class MessageController extends Controller
             'sender'  => 'assistant',
             'content' => $reply,
         ]);
+        dd(response()->json($userMessage, 201));
 
         /* 4️⃣ Risponde 201 + JSON con **solo** il record utente */
         return response()->json($userMessage, 201);

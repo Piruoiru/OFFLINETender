@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    protected $fillable = ['conversation_id', 'sender', 'content'];
+    protected $fillable = [
+        'conversation_id',
+        'user_id',        // 👈🏼 aggiungi questo
+        'content',
+        'sender',
+
+    ];
+
 
     /**
      * Il messaggio appartiene a una conversazione

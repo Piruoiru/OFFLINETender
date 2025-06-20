@@ -23,16 +23,37 @@ class ConversationApi
         return Http::timeout(120)->get(url('/api/conversations'));;
     }
 
-    public function sendchat(int $conversationId, string $content, string $sender)
-     {
-        return Http::timeout(120)->post(
-            url("/api/conversations/{$conversationId}/messages"),
-            [
-                'content' => $content,
-                'sender'  => $sender,
-                'user_id' => auth()->id(),
-            ]
-        );
+    public function askLLM(int $conversationId, string $prompt): string
+    {
+        $response = Http::baseUrl(config('services.llm.url'))
+            ->timeout(3600)
+            ->post('/chat', [
+                'conversation_id' => $conversationId,
+                'message'         => $prompt,
+            ])
+            ->throw();
+
+        // restituisci solo la stringa con la risposta
+        return $response->json('response', '');
+    }
+
+    public function sendChat(
+        int $conversationId,
+        string $content,
+        string $sender,
+        int $userId
+    ): array {
+        return Http::timeout(120)
+            ->post(
+                url("/api/conversations/{$conversationId}/messages"),
+                [
+                    'content' => $content,
+                    'sender'  => $sender,
+                    'user_id' => $userId,
+                ]
+            )
+            ->throw()     // se status ≥ 400 il job finisce in failed()
+            ->json();     // torna direttamente un array PHP
     }
 
     public function refresh(int $conversationId)

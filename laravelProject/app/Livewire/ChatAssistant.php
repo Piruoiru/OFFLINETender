@@ -7,11 +7,12 @@ use Illuminate\Support\Facades\Http;
 use App\Services\ConversationApi;
 use App\Models\Message;
 use Livewire\WithPagination;
+use App\Jobs\ProcessAssistantReply;
 
 class ChatAssistant extends Component
 {
     use WithPagination;
-    
+        
     public int $perPage = 20;
 
     /* ---------- Stato ---------- */
@@ -30,37 +31,45 @@ class ChatAssistant extends Component
     public function openModal(): void   { $this->showModal = true;  }
     public function closeModal(): void  { $this->showModal = false; }
 
-    public function createConversation(): void
-{
-    $conversationApi = app(ConversationApi::class);
-
-    // il service può restituire o un Response o direttamente l’array
-    $raw = $conversationApi->create(trim($this->newConversationTitle) ?: null);
-
-    // --- normalizziamo ---
-    if ($raw instanceof \Illuminate\Http\Client\Response) {
-        if (! $raw->successful()) {
-            session()->flash('error', 'Errore nel salvataggio');
-            return;
-        }
-        $conv = $raw->json();              // array normalizzato
-    } else {
-        // qui se $raw **è già** l’array
-        $conv = $raw;
+    public function getListeners(): array
+    {
+        // se esiste una chat attiva genero il canale, altrimenti niente listener
+        return $this->activeConversation
+            ? ["echo:conversations.{$this->activeConversation},MessageUpdated" => 'handleBroadcast']
+            : [];
     }
 
-    /* --------  aggiornamento stato UI -------- */
-    $this->conversations[]   = $conv;
-    $this->activeConversation = $conv['id'];
-    $this->messages           = [];
-    $this->newConversationTitle = '';
-    $this->showModal            = false;
-    $this->perPage              = 20;
-    $this->resetPage();
+    public function createConversation(): void
+    {
+        $conversationApi = app(ConversationApi::class);
 
-    // se vuoi subito i (pochi) messaggi presenti:
-    // $this->refreshMessages();
-}
+        // il service può restituire o un Response o direttamente l’array
+        $raw = $conversationApi->create(trim($this->newConversationTitle) ?: null);
+
+        // --- normalizziamo ---
+        if ($raw instanceof \Illuminate\Http\Client\Response) {
+            if (! $raw->successful()) {
+                session()->flash('error', 'Errore nel salvataggio');
+                return;
+            }
+            $conv = $raw->json();              // array normalizzato
+        } else {
+            // qui se $raw **è già** l’array
+            $conv = $raw;
+        }
+
+        /* --------  aggiornamento stato UI -------- */
+        $this->conversations[]   = $conv;
+        $this->activeConversation = $conv['id'];
+        $this->messages           = [];
+        $this->newConversationTitle = '';
+        $this->showModal            = false;
+        $this->perPage              = 20;
+        $this->resetPage();
+
+        // se vuoi subito i (pochi) messaggi presenti:
+        // $this->refreshMessages();
+    }
 
 
     /* ---------- Mount ---------- */
@@ -110,47 +119,55 @@ class ChatAssistant extends Component
 
     /* ---------- Invio ---------- */
     public function sendMessage(): void
-    {   
-        $conversationApi = app(ConversationApi::class);
+{
+    if ($this->isSending) return;
+    $this->isSending = true;
 
-        // ⛔ evita invii multipli finché la richiesta precedente non è finita
-        if ($this->isSending) {
-            return;
-        }
-        $this->isSending = true;
-
-        // ⛔ messaggio vuoto o conversazione non selezionata
-        $content = trim($this->newMessage);
-        if ($content === '' || ! $this->activeConversation) {
-            $this->isSending = false;
-            return;
-        }
-
-        // ← MODIFICA: push immediato del messaggio dell’utente
-        $this->messages[] = [
-            'id'      => uniqid('tmp_user_', true),
-            'content' => $content,
-            'sender'  => 'user',
-        ];
-
-        // ← MODIFICA: push del placeholder “Sto pensando…”
-        $this->messages[] = [
-            'id'      => uniqid('tmp_thinking_', true),
-            'content' => 'Sto pensando...',
-            'sender'  => 'assistant',
-        ];
-
-        // svuoto subito l’input
-        $this->newMessage = '';
-
-        
-        $conversationApi->sendChat($this->activeConversation, $content, 'user');
-
-        $this->isSending = false; // sblocca l’invio successivo
-
-        // ← RIMOSSA: tolta la chiamata a refreshMessages() qui, 
-        // perché ora il wire:poll gestisce il fetch periodico
+    $content = trim($this->newMessage);
+    if ($content === '' || ! $this->activeConversation) {
+        $this->isSending = false;
+        return;
     }
+
+    $userId = auth()->id();   // o altro modo per ottenere lo user id corrente
+
+    $userMsg = Message::create([
+        'conversation_id' => $this->activeConversation,
+        'user_id'         => $userId,        //  👈  necessario
+        'content'         => $content,
+        'sender'          => 'user',
+    ]);
+
+    $assistantMsg = Message::create([
+        'conversation_id' => $this->activeConversation,
+        'user_id'         => $userId,        // usa lo stesso owner della chat
+        'content'         => 'Sto pensando…',
+        'sender'          => 'assistant',
+    ]);
+
+    /* 3️⃣  Aggiorna la UI locale */
+    $this->messages[] = $userMsg->toArray();
+    $this->messages[] = $assistantMsg->toArray();
+    $this->newMessage = '';
+
+    /* 4️⃣  Dispatch del Job */
+    ProcessAssistantReply::dispatch(
+        $this->activeConversation,
+        $assistantMsg->id,
+        $content,
+        userId: auth()->id(),
+    );
+
+    // ProcessAssistantReply::dispatch(
+    //     conversationId: $conversation->id,
+    //     assistantMessageId: $assistantMessage->id,
+    //     prompt: $prompt,
+    //     userId: auth()->id(),           // 👈 ora è valorizzato
+    // );
+
+    $this->isSending = false;
+}
+
 
     public function getMessagesProperty()
     {
@@ -181,5 +198,11 @@ class ChatAssistant extends Component
     public function loadMore(): void
     {
         $this->perPage += 20;   // la prossima render mostrerà 20 record in più
+    }
+
+    public function handleBroadcast($payload)
+    {
+        // aggiorna l’array $messages o fai refresh
+        $this->refreshMessages();
     }
 }
