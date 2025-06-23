@@ -1,0 +1,12 @@
+PyPDF2
+scrapy
+requests
+ollama
+python-dotenv
+litellm
+flask
+langchain_community
+faiss-cpu
+PyJWT
+psycopg2-binary
+pgvector[psycopg2]
