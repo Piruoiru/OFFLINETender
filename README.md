@@ -155,10 +155,19 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 **Using [Flask](https://www.npmjs.com/):**
 
-Open the project, run the command: 
+Open the project and run:
 
 ```sh
 python .\Project\UseCases\API.py
+```
+Next, switch to the Laravel directory:
+
+```sh
+cd .\laravelProject\
+```
+To handle chat messages, start the queue worker:
+```sh
+php artisan queue:work
 ```
 
 ### Accessing the Application
