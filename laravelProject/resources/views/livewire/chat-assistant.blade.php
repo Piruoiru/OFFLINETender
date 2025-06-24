@@ -4,7 +4,7 @@
         <div class="bg-gray-100 dark:bg-gray-800 p-4 border-r dark:border-gray-700 flex flex-col overflow-y-auto" style="width: 17rem;">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-white">Conversazioni</h2>
-                <button type="button" wire:click="openModal" class="border dark:border-gray-600 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 w-8 h-8">+</button>
+                <button type="button" wire:click="openModal" class="border dark:border-white-600 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 w-8 h-8 border-2 border-blue-500">+</button>
             </div>
             @if ($showModal)
             <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -22,7 +22,7 @@
                             <button wire:click="closeModal" type="button"
                                 class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded-lg text-black dark:text-white hover:bg-gray-400 dark:hover:bg-gray-700">Annulla</button>
                             <button wire:click="createConversation" type="button"
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Crea</button>
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-black rounded-lg dark:text-white border-2 border-blue-700">Crea</button>
                         </div>
                     </div>
                 </div>
@@ -33,9 +33,9 @@
                 @foreach ($conversations as $conv)
                     <button wire:click="selectConversation({{ $conv['id'] }})"
                             class="block w-full text-left px-4 py-2 rounded-lg font-medium transition
-                                {{ $activeConversation === $conv['id']
-                                    ? 'bg-blue-600 text-black dark:bg-blue-500 dark:text-white'
-                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-600' }}">
+    {{ $activeConversation === $conv['id']
+        ? 'bg-blue-600 text-black dark:bg-blue-500 dark:text-white border-2 border-blue-500 dark:border-blue-400'
+        : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-600' }}">
                         {{ $conv['title'] }}
                     </button>
                 @endforeach
@@ -56,15 +56,24 @@
                         </div>
                     @endif
                     @foreach ($loaded as $message)
-                        <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
-                            <div class="max-w-lg px-4 py-2 rounded-xl shadow
-                                {{ $message['sender'] === 'user'
-                                    ? 'bg-blue-500 text-black'
-                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white' }}">
-                                {{ $message['content'] }}
-                            </div>
-                        </div>
-                    @endforeach
+    <div class="w-full flex {{ $message['sender'] === 'user' ? 'justify-end' : 'justify-start' }}">
+        <div class="max-w-lg px-4 py-2 rounded-xl shadow
+            {{ $message['sender'] === 'user'
+                ? 'bg-blue-500 text-black border-2 border-white'
+                : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white' }}">
+
+            {{-- Se il messaggio è il placeholder "Sto pensando…" mostra il loader --}}
+            @if($message['sender'] === 'assistant' && $message['content'] === 'Sto pensando…')
+                <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
+                    Sto pensando
+                    <x-filament::loading-indicator class="h-5 w-5" />
+                </div>
+            @else
+                {{ $message['content'] }}
+            @endif
+        </div>
+    </div>
+@endforeach
                 </div>
     
                 <!-- Input -->
@@ -74,7 +83,7 @@
                         placeholder="Scrivi un messaggio..." />
     
                     <button type="submit"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold transition">
+                            class="bg-blue-600 hover:bg-blue-700 text-black px-6 py-2 rounded-full font-semibold transition border-2 border-blue-700 dark:border-blue-900">
                         Invia
                     </button>
                 </form>
