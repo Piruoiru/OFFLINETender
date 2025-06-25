@@ -1,0 +1,92 @@
+/* IMPORT & TAILWIND CONFIG  ----------------------------------------------- */
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
+@config "tailwind.config.js";
+
+/* PALETTE ricavata da Figma ------------------------------------------------ */
+
+
+:root {
+    --sidebar-bg:        #000000; /* nero pieno                    */
+    --header-bg:         #7b9aa5; /* barra “Conversazioni”         */
+    --btn-conv-bg:       #3c6676; /* pulsanti elenco conversazioni */
+    --btn-conv-bg-hover: #5f9db9;
+    --btn-conv-active:   #77aec8;
+
+    --chat-bg:           #404040; /* sfondo area messaggi          */
+    --bubble-user:       #a8cfdd; /* bolla utente (destra)         */
+    --bubble-ai:         #5f9db9; /* bolla assistant (sinistra)    */
+
+    --input-bar-bg:      #000000; /* barra in basso                */
+    --send-btn-bg:       #47788c;
+    --send-btn-hover:    #5f9db9;
+}
+
+/* SIDEBAR ----------------------------------------------------------------- */
+.sidebar        { background: var(--sidebar-bg);                }
+.sidebar-header { background: var(--header-bg);  }
+
+/* Conversazione (lista) ---------------------------------------------------- */
+.conversation-btn {
+    @apply w-full text-left font-medium rounded-lg transition px-4 py-2;
+    background: var(--btn-conv-bg);
+    color: #ffffff;
+}
+.conversation-btn:hover        { background: var(--btn-conv-bg-hover); }
+.conversation-btn.active-conversation {
+    background: var(--btn-conv-active);
+    border-left: 4px solid #ffffff;
+}
+
+/* AREA CHAT --------------------------------------------------------------- */
+.chat-wrapper { background: var(--chat-bg); }
+
+.bubble-user      { background: var(--bubble-user);      color: #000000; }
+.bubble-assistant { background: var(--bubble-ai);        color: #000000; }
+.bubble-common    { @apply px-4 py-2 rounded-xl shadow max-w-lg; }
+
+/* BARRA INPUT ------------------------------------------------------------- */
+.chat-input-bar { background: var(--input-bar-bg); border-top: 0px }
+
+.send-btn {
+    @apply rounded-full font-semibold border-2 transition px-6 py-2;
+    background: var(--send-btn-bg);
+    border-color: transparent;
+    color: #ffffff;
+}
+.send-btn:hover { background: var(--send-btn-hover); }
+
+.plus-button{
+    border: 2px solid #000;
+    border-radius: 7px;
+    background-color: black;
+    color: #ffffff;
+}
+
+.modal{
+    background-color: var(--header-bg);
+}
+
+.modal-input{
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.button-crea{
+    background-color: var(--send-btn-bg);
+    color: #ffffff;
+    border: 0em;
+}
+
+.button-crea:hover{
+    background-color: var(--send-btn-hover);
+}
+
+.button-annulla{
+    background-color: #ffffff;
+    color: #000000;
+    border: 0em;
+}
+
+.button-annulla:hover{
+    background-color: #404040;
+}
