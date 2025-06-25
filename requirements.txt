@@ -10,3 +10,4 @@ faiss-cpu
 PyJWT
 psycopg2-binary
 pgvector[psycopg2]
+sentence_transformers
