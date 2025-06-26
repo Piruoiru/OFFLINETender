@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flask
+    restart: unless-stopped
+    ports:
+      - "5050:5050" 
+    env_file:
+      - ./Project/Config/.env
+    networks:
+      - aibackend
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - flask
+    ports:               # <-- host 80 → container 80
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - aibackend
+
+networks:
+  aibackend:
+    external: true   # 👈 rete già esistente, non verrà ricreata
+    name: aibackend

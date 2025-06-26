@@ -12,7 +12,7 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Esponi la porta Flask
-EXPOSE 5000
+EXPOSE 5050
 
 # Comando per avviare l'app Flask
-CMD ["python", "../frameworks/flask_app/analyzer.py"]
+CMD ["python", "./Project/UseCases/API.py"]
